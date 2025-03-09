@@ -1,0 +1,2 @@
+This is an edited test file.
+Created by the MCP filesystem test script.
