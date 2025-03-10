@@ -1,6 +1,19 @@
-# MCP Server with OpenAI, Git, and Filesystem Integration
+# MCP Server with OpenAI, Git, Filesystem, and Prometheus Integration
 
-This repository contains a Model Control Plane (MCP) server implementation that supports OpenAI services, Git repository analysis, and local filesystem operations.
+This repository contains a Model Control Plane (MCP) server implementation that supports OpenAI services, Git repository analysis, local filesystem operations, and Prometheus integration.
+
+## Project Structure
+
+```
+MCP/
+├── mcp/               # Core MCP library modules
+├── scripts/           # Utility scripts and test tools
+├── prometheus/        # Prometheus configuration
+├── docker-compose.yml # Docker configuration
+├── mcp_server.py      # Main server implementation
+├── mcp_run            # Main runner script (shortcut)
+└── README.md          # This file
+```
 
 ## Requirements
 
@@ -10,6 +23,7 @@ This repository contains a Model Control Plane (MCP) server implementation that 
 - OpenAI SDK
 - GitPython
 - Requests
+- Docker and Docker Compose (for Prometheus features)
 
 ## Installation
 
@@ -40,41 +54,75 @@ export OPENAI_CHAT_MODEL="gpt-4o-mini"  # Default if not specified
 export OPENAI_COMPLETION_MODEL="gpt-3.5-turbo-instruct"  # Default if not specified
 ```
 
+For Prometheus:
+```bash
+export PROMETHEUS_URL="http://localhost:9090"  # Default if not specified
+```
+
 ## Running the Server
 
 Start the MCP server:
 
 ```bash
-python mcp_server.py
+python scripts/start_mcp_server.py
+```
+
+Or for more options:
+
+```bash
+python scripts/start_mcp_server.py --host 0.0.0.0 --port 8000 --debug
 ```
 
 The server will be available at http://localhost:8000.
 
-## Testing
+## Unified Testing Tool
+
+We provide a unified testing script that gives you a user-friendly interface to all testing functionality:
+
+```bash
+./mcp_run
+```
+
+This interactive script provides:
+- Filesystem tests
+- Git integration tests
+- Memory analysis tools
+- Prometheus tests & memory stress
+- MCP server management
+- Environment setup
+
+## Individual Tests
+
+You can also run individual tests directly:
 
 Test the OpenAI integration:
 ```bash
-python test_mcp_client.py
+python scripts/test_mcp_client.py
 ```
 
 Test the Git integration (provide a Git repository URL):
 ```bash
-python test_git_integration.py https://github.com/username/repository
+python scripts/test_git_integration.py https://github.com/username/repository
 ```
 
-Test the Git diff functionality (analyze the last commit):
+Test the Git diff functionality (analyze requirements compatibility):
 ```bash
-python test_git_diff.py https://github.com/username/repository
+python scripts/test_git_diff.py https://github.com/username/repository [commit-sha]
 ```
 
 Test the filesystem functionality:
 ```bash
-python test_filesystem.py
+python scripts/test_filesystem.py
 ```
 
 Test the langflow integration with MCP:
 ```bash
-python test_langflow_integration.py [OPTIONAL_REPO_URL]
+python scripts/test_langflow_integration.py [OPTIONAL_REPO_URL]
+```
+
+Test the Prometheus integration:
+```bash
+python scripts/test_prometheus.py [prometheus_url]
 ```
 
 ## Advanced Git Analysis
@@ -82,20 +130,109 @@ python test_langflow_integration.py [OPTIONAL_REPO_URL]
 For more advanced Git repository analysis with AI recommendations:
 
 ```bash
-python langflow_git_analyzer.py https://github.com/username/repository
+python scripts/langflow_git_analyzer.py https://github.com/username/repository
 ```
 
 You can also search for specific patterns in the repository:
 
 ```bash
-python langflow_git_analyzer.py https://github.com/username/repository --search "def main"
+python scripts/langflow_git_analyzer.py https://github.com/username/repository --search "def main"
 ```
 
 Or analyze the last commit diff with AI insights:
 
 ```bash
-python langflow_git_analyzer.py https://github.com/username/repository --diff
+python scripts/langflow_git_analyzer.py https://github.com/username/repository --diff
 ```
+
+## Memory Analysis Tools
+
+MCP includes several tools for memory monitoring and analysis:
+
+```bash
+# Basic memory diagnostics with AI analysis
+python scripts/ai_memory_diagnostics.py
+
+# Interactive memory dashboard
+python scripts/mcp_memory_dashboard.py
+
+# Memory alerting system
+python scripts/mcp_memory_alerting.py
+```
+
+You can also simulate memory pressure for testing:
+
+```bash
+python scripts/simulate_memory_pressure.py --target 85 --duration 300
+```
+
+## Prometheus Integration
+
+### Setup
+
+1. Start the Prometheus stack using Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+This will start:
+- Prometheus server (accessible at http://localhost:9090)
+- Node Exporter (for host metrics)
+- cAdvisor (for container metrics)
+
+2. For stress testing, you can start the memory stress container:
+
+```bash
+docker compose up -d --build memory-stress
+```
+
+Or use the container test script:
+```bash
+./scripts/container-memory-test.sh start
+```
+
+### Using Prometheus Client
+
+The `MCPAIComponent` class includes Prometheus capabilities:
+
+```python
+from langflow import MCPAIComponent
+
+# Initialize the client
+mcp = MCPAIComponent(mcp_server_url="http://localhost:8000")
+
+# Instant query (current metric values)
+result = mcp.prometheus_query("up")
+
+# Range query (metrics over time)
+result = mcp.prometheus_query_range(
+    query="rate(node_cpu_seconds_total{mode='system'}[1m])",
+    start="2023-03-01T00:00:00Z",
+    end="2023-03-01T01:00:00Z",
+    step="15s"
+)
+
+# Get all labels
+labels = mcp.prometheus_get_labels()
+
+# Get label values
+values = mcp.prometheus_get_label_values("job")
+
+# Get targets
+targets = mcp.prometheus_get_targets()
+
+# Get alerts
+alerts = mcp.prometheus_get_alerts()
+```
+
+### Useful PromQL Queries
+
+- CPU Usage: `rate(node_cpu_seconds_total{mode!="idle"}[1m])`
+- Memory Usage: `node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes`
+- Disk Usage: `node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}`
+- Container CPU Usage: `rate(container_cpu_usage_seconds_total[1m])`
+- Container Memory Usage: `container_memory_usage_bytes`
 
 ## API Endpoints
 
@@ -122,6 +259,16 @@ python langflow_git_analyzer.py https://github.com/username/repository --diff
 - POST `/v1/models/filesystem/move` - Move a file or directory
 - POST `/v1/models/filesystem/search` - Search for files matching a pattern
 - POST `/v1/models/filesystem/info` - Get information about a file or directory
+
+### Prometheus Endpoints
+- POST `/v1/models/prometheus/query` - Execute an instant query
+- POST `/v1/models/prometheus/query_range` - Execute a range query
+- POST `/v1/models/prometheus/series` - Get series data
+- GET `/v1/models/prometheus/labels` - Get all available labels
+- POST `/v1/models/prometheus/label_values` - Get values for a specific label
+- GET `/v1/models/prometheus/targets` - Get all targets
+- GET `/v1/models/prometheus/rules` - Get all rules
+- GET `/v1/models/prometheus/alerts` - Get all alerts
 
 ## Client Usage
 
@@ -222,4 +369,23 @@ print(diff_summary)
 # Get AI analysis of the commit changes
 diff_analysis = analyzer.analyze_commit_diff()
 print(diff_analysis)
-``` 
+```
+
+## Troubleshooting
+
+### Prometheus Issues
+1. Verify Prometheus is running: `docker ps | grep prometheus`
+2. Check you can access the Prometheus UI: http://localhost:9090
+3. Verify the MCP server is running and accessible
+4. Check the MCP server logs for errors
+5. Try simple queries first to verify connectivity (e.g., `up` query)
+
+### OpenAI Issues
+1. Verify your API keys are set correctly
+2. Check for rate limiting or quota issues
+3. Verify you're using supported models for your API key
+
+### Git Issues
+1. Ensure the Git repository URL is accessible
+2. Check for authentication issues if using private repositories
+3. Ensure GitPython is installed correctly 

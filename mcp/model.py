@@ -10,6 +10,7 @@ class ModelCapability(str, Enum):
     IMAGE_GENERATION = "image_generation"
     GIT = "git"
     FILESYSTEM = "filesystem"
+    PROMETHEUS = "prometheus"
 
 class ModelInfo(BaseModel):
     """Represents information about a model in MCP"""

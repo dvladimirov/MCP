@@ -9,6 +9,9 @@ dependencies = [
     "gitpython>=3.1.44",
     "langflow>=1.1.1",
     "openai>=1.65.4",
+    "prometheus-client>=0.21.1",
+    "psutil>=7.0.0",
+    "pydantic>=2.7.4",
     "requests>=2.32.3",
     "uvicorn>=0.34.0",
 ]

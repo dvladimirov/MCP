@@ -1,0 +1,90 @@
+=== ALERT LOGGED AT 2025-03-10 19:41:54 ===
+MEMORY ALERT: ContainerMemoryUsage
+Severity: WARNING
+Target: unknown (container)
+Status: FIRING
+Started: Unknown
+Summary: High container memory usage
+Description: Container  memory usage is above 50% for more than 1 minute.
+
+Current Memory Details:
+
+Recommended Actions:
+
+Prometheus URL: https://prometheus.demo.do.prometheus.io/alerts
+
+=== ALERT LOGGED AT 2025-03-10 19:41:54 ===
+MEMORY ALERT: ContainerMemoryUsage
+Severity: WARNING
+Target: prometheus (container)
+Status: FIRING
+Started: Unknown
+Summary: High container memory usage
+Description: Container prometheus memory usage is above 50% for more than 1 minute.
+
+Current Memory Details:
+
+Recommended Actions:
+
+Prometheus URL: https://prometheus.demo.do.prometheus.io/alerts
+
+=== ALERT LOGGED AT 2025-03-10 19:41:54 ===
+MEMORY ALERT: ContainerMemoryUsage
+Severity: WARNING
+Target: redis (container)
+Status: FIRING
+Started: Unknown
+Summary: High container memory usage
+Description: Container redis memory usage is above 50% for more than 1 minute.
+
+Current Memory Details:
+
+Recommended Actions:
+
+Prometheus URL: https://prometheus.demo.do.prometheus.io/alerts
+
+=== ALERT LOGGED AT 2025-03-10 19:41:54 ===
+MEMORY ALERT: ContainerMemoryUsage
+Severity: WARNING
+Target: mysql8 (container)
+Status: FIRING
+Started: Unknown
+Summary: High container memory usage
+Description: Container mysql8 memory usage is above 50% for more than 1 minute.
+
+Current Memory Details:
+
+Recommended Actions:
+
+Prometheus URL: https://prometheus.demo.do.prometheus.io/alerts
+
+=== ALERT LOGGED AT 2025-03-10 19:41:54 ===
+MEMORY ALERT: ContainerMemoryUsage
+Severity: WARNING
+Target: node-exporter (container)
+Status: FIRING
+Started: Unknown
+Summary: High container memory usage
+Description: Container node-exporter memory usage is above 50% for more than 1 minute.
+
+Current Memory Details:
+
+Recommended Actions:
+
+Prometheus URL: https://prometheus.demo.do.prometheus.io/alerts
+
+=== ALERT LOGGED AT 2025-03-10 19:41:54 ===
+MEMORY ALERT: ContainerMemoryUsage
+Severity: WARNING
+Target: cadvisor (container)
+Status: FIRING
+Started: Unknown
+Summary: High container memory usage
+Description: Container cadvisor memory usage is above 50% for more than 1 minute.
+
+Current Memory Details:
+
+Recommended Actions:
+
+Prometheus URL: https://prometheus.demo.do.prometheus.io/alerts
+

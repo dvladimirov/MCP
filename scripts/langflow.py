@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+# Add the parent directory to Python path for proper imports
+script_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(script_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
+import json
 import requests
 from typing import Dict, List, Any, Optional, Callable
 
@@ -318,6 +329,157 @@ class MCPAIComponent:
         response = requests.post(
             f"{self.mcp_server_url}/v1/models/filesystem/info",
             json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    # Prometheus methods
+    def prometheus_query(self, query: str, time: Optional[str] = None) -> Dict[str, Any]:
+        """Execute an instant query against Prometheus
+        
+        Args:
+            query: PromQL query expression
+            time: Evaluation timestamp (rfc3339 or unix_timestamp), optional
+            
+        Returns:
+            Dict[str, Any]: Query result
+        """
+        payload = {
+            "query": query
+        }
+        
+        if time:
+            payload["time"] = time
+            
+        response = requests.post(
+            f"{self.mcp_server_url}/v1/models/prometheus/query",
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def prometheus_query_range(self, query: str, start: str, end: str, step: str) -> Dict[str, Any]:
+        """Execute a range query against Prometheus
+        
+        Args:
+            query: PromQL query expression
+            start: Start timestamp (rfc3339 or unix_timestamp)
+            end: End timestamp (rfc3339 or unix_timestamp)
+            step: Query resolution step width
+            
+        Returns:
+            Dict[str, Any]: Range query result
+        """
+        payload = {
+            "query": query,
+            "start": start,
+            "end": end,
+            "step": step
+        }
+            
+        response = requests.post(
+            f"{self.mcp_server_url}/v1/models/prometheus/query_range",
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def prometheus_get_series(
+        self, 
+        match: List[str], 
+        start: Optional[str] = None, 
+        end: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Find series matching a label set
+        
+        Args:
+            match: Series selector string array
+            start: Start timestamp, optional
+            end: End timestamp, optional
+            
+        Returns:
+            Dict[str, Any]: Series data
+        """
+        payload = {
+            "match": match
+        }
+        
+        if start:
+            payload["start"] = start
+        if end:
+            payload["end"] = end
+            
+        response = requests.post(
+            f"{self.mcp_server_url}/v1/models/prometheus/series",
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def prometheus_get_labels(self) -> Dict[str, Any]:
+        """Get all label names
+        
+        Returns:
+            Dict[str, Any]: Label names
+        """
+        response = requests.get(
+            f"{self.mcp_server_url}/v1/models/prometheus/labels"
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def prometheus_get_label_values(self, label_name: str) -> Dict[str, Any]:
+        """Get values for a label
+        
+        Args:
+            label_name: Label name
+            
+        Returns:
+            Dict[str, Any]: Label values
+        """
+        payload = {
+            "label_name": label_name
+        }
+        
+        response = requests.post(
+            f"{self.mcp_server_url}/v1/models/prometheus/label_values",
+            json=payload
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def prometheus_get_targets(self) -> Dict[str, Any]:
+        """Get targets
+        
+        Returns:
+            Dict[str, Any]: Targets information
+        """
+        response = requests.get(
+            f"{self.mcp_server_url}/v1/models/prometheus/targets"
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def prometheus_get_rules(self) -> Dict[str, Any]:
+        """Get rules
+        
+        Returns:
+            Dict[str, Any]: Rules information
+        """
+        response = requests.get(
+            f"{self.mcp_server_url}/v1/models/prometheus/rules"
+        )
+        response.raise_for_status()
+        return response.json()
+    
+    def prometheus_get_alerts(self) -> Dict[str, Any]:
+        """Get alerts
+        
+        Returns:
+            Dict[str, Any]: Alerts information
+        """
+        response = requests.get(
+            f"{self.mcp_server_url}/v1/models/prometheus/alerts"
         )
         response.raise_for_status()
         return response.json()

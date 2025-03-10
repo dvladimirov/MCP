@@ -1,0 +1,39 @@
+groups:
+  - name: memory_alerts
+    rules:
+      - alert: LowMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 30
+        for: 1m
+        labels:
+          severity: info
+        annotations:
+          summary: "Low memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 30% on {{ $labels.instance }} for more than 1 minute."
+      
+      - alert: MediumMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 40
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Medium memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 40% on {{ $labels.instance }} for more than 1 minute."
+      
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 50
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 50% on {{ $labels.instance }} for more than 1 minute."
+      
+      # Container memory alerts (cAdvisor metrics)
+      - alert: ContainerMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 50
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High container memory usage"
+          description: "Container {{ $labels.name }} memory usage is above 50% for more than 1 minute." 

@@ -7,6 +7,7 @@ from mcp.server import MCPServer
 from mcp.model import ModelInfo, ModelCapability
 from mcp.git_service import GitService
 from mcp.filesystem_service import FilesystemService
+from mcp.prometheus_service import PrometheusService
 
 # Initialize FastAPI app
 app = FastAPI(title="MCP AI Server")
@@ -37,6 +38,7 @@ mcp_server = MCPServer()
 
 # Create services
 filesystem_service = FilesystemService()
+prometheus_service = PrometheusService(os.getenv("PROMETHEUS_URL", "http://localhost:9090"))
 
 # Define model info for Azure OpenAI
 azure_gpt_model = ModelInfo(
@@ -118,12 +120,34 @@ filesystem_model = ModelInfo(
     }
 )
 
+# Define model info for Prometheus service
+prometheus_model = ModelInfo(
+    id="prometheus",
+    name="Prometheus Metrics",
+    description="Access to Prometheus metrics through MCP",
+    capabilities=[
+        ModelCapability.PROMETHEUS
+    ],
+    context_length=0,  # Not applicable for Prometheus operations
+    pricing={},  # No pricing for Prometheus operations
+    metadata={
+        "supports_query": True,
+        "supports_query_range": True,
+        "supports_series": True,
+        "supports_labels": True,
+        "supports_targets": True,
+        "supports_rules": True,
+        "supports_alerts": True
+    }
+)
+
 # Register models with MCP server
 mcp_server.register_model(azure_gpt_model)
 mcp_server.register_model(openai_gpt_chat_model)
 mcp_server.register_model(openai_gpt_completion_model)
 mcp_server.register_model(git_model)
 mcp_server.register_model(filesystem_model)
+mcp_server.register_model(prometheus_model)
 
 # Define request models
 class Message(BaseModel):
@@ -184,6 +208,25 @@ class SearchFilesRequest(BaseModel):
 
 class FileInfoRequest(BaseModel):
     path: str
+
+# Define Prometheus request models
+class PrometheusQueryRequest(BaseModel):
+    query: str
+    time: Optional[str] = None
+
+class PrometheusQueryRangeRequest(BaseModel):
+    query: str
+    start: str
+    end: str
+    step: str
+
+class PrometheusSeriesRequest(BaseModel):
+    match: List[str]
+    start: Optional[str] = None
+    end: Optional[str] = None
+
+class PrometheusLabelValuesRequest(BaseModel):
+    label_name: str
 
 # Implement Azure completion endpoint
 @app.post("/v1/models/azure-gpt-4/completion")
@@ -436,6 +479,64 @@ async def get_file_info(request: FileInfoRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# Implement Prometheus endpoints
+@app.post("/v1/models/prometheus/query")
+async def prometheus_query(request: PrometheusQueryRequest):
+    """Query Prometheus for metrics"""
+    result = prometheus_service.query(request.query, request.time)
+    return result
+
+@app.post("/v1/models/prometheus/query_range")
+async def prometheus_query_range(request: PrometheusQueryRangeRequest):
+    """Query Prometheus over a time range"""
+    result = prometheus_service.query_range(
+        request.query, 
+        request.start, 
+        request.end, 
+        request.step
+    )
+    return result
+
+@app.post("/v1/models/prometheus/series")
+async def prometheus_series(request: PrometheusSeriesRequest):
+    """Get series from Prometheus"""
+    result = prometheus_service.get_series(
+        request.match, 
+        request.start, 
+        request.end
+    )
+    return result
+
+@app.get("/v1/models/prometheus/labels")
+async def prometheus_labels():
+    """Get all label names from Prometheus"""
+    result = prometheus_service.get_labels()
+    return result
+
+@app.post("/v1/models/prometheus/label_values")
+async def prometheus_label_values(request: PrometheusLabelValuesRequest):
+    """Get values for a specific label from Prometheus"""
+    result = prometheus_service.get_label_values(request.label_name)
+    return result
+
+@app.get("/v1/models/prometheus/targets")
+async def prometheus_targets():
+    """Get targets from Prometheus"""
+    result = prometheus_service.get_targets()
+    return result
+
+@app.get("/v1/models/prometheus/rules")
+async def prometheus_rules():
+    """Get rules from Prometheus"""
+    result = prometheus_service.get_rules()
+    return result
+
+@app.get("/v1/models/prometheus/alerts")
+async def prometheus_alerts():
+    """Get alerts from Prometheus"""
+    result = prometheus_service.get_alerts()
+    return result
 
 # Expose MCP protocol endpoints
 @app.get("/v1/models")

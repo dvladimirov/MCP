@@ -1,0 +1,13 @@
+FROM alpine:latest
+
+# Install stress-ng for memory testing
+RUN apk add --no-cache stress-ng
+
+# Copy the stress script
+COPY scripts/memory-stress.sh /memory-stress.sh
+
+# Make the script executable
+RUN chmod +x /memory-stress.sh
+
+# Run with a small amount of memory usage by default
+CMD ["/memory-stress.sh"] 
