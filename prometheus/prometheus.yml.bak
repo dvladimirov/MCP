@@ -39,4 +39,4 @@ scrape_configs:
   scrape_interval: 15s
   static_configs:
   - targets:
-    - 192.168.1.7:9093
+    - host.docker.internal:9093

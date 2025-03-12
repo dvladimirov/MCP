@@ -1,0 +1,5 @@
+
+Detailed metrics report saved to grafana_metrics_report.md
+Please review this report to help debug any Grafana dashboard integration issues.
+
+Recommended PromQL queries for Top N panels have been included in the report.

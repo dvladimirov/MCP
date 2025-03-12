@@ -7,7 +7,7 @@ echo "========================================================"
 
 ACTION=${1:-"start"}
 
-# Check if docker and docker-compose are installed
+# Check if docker and docker compose are installed
 
 # Function to check if containers are running
 check_containers() {
@@ -40,7 +40,7 @@ start_memory_stress() {
   fi
 
   # Build and start the memory-stress container
-  docker-compose up -d --build memory-stress
+  docker compose up -d --build memory-stress
 
   echo "Memory stress container started."
   echo "View Prometheus alerts at: http://localhost:9090/alerts"
@@ -53,8 +53,8 @@ stop_memory_stress() {
   echo "Stopping memory stress container..."
 
   if docker ps | grep -q memory-stress; then
-    docker-compose stop memory-stress
-    docker-compose rm -f memory-stress
+    docker compose stop memory-stress
+    docker compose rm -f memory-stress
     echo "Memory stress container stopped and removed."
   else
     echo "Memory stress container is not running."
@@ -100,7 +100,7 @@ case $ACTION in
     start_memory_stress
   else
     echo "Starting all monitoring containers..."
-    docker-compose up -d prometheus cadvisor node-exporter
+    docker compose up -d prometheus cadvisor node-exporter
     sleep 5
     start_memory_stress
   fi
@@ -131,4 +131,3 @@ case $ACTION in
   echo "  status  - Show system status"
   ;;
 esac
-

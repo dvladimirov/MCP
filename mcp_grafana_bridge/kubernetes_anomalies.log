@@ -1,0 +1,44 @@
+2025-03-12 16:15:23,447 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:15:23,447 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:15:23,465 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:17:56,377 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:17:56,377 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:17:56,391 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:20:23,711 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:20:23,711 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:20:23,724 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:23:03,393 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:23:03,393 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:23:03,406 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:23:13,936 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:23:13,936 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:23:13,949 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:25:24,001 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:25:24,001 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:25:24,016 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:35:39,285 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:35:39,285 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:35:39,301 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:40:39,621 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:40:39,621 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:40:39,625 - kubernetes-anomaly-detector - ERROR - Error querying Prometheus: HTTPConnectionPool(host='prometheus', port=9090): Max retries exceeded with url: /api/v1/query?query=%0A++++++++topk%2820%2C+rate%28container_cpu_usage_seconds_total%7Bcontainer_name%21%3D%22POD%22%2Ccontainer%21%3D%22%22%2Cimage%21%3D%22%22%2Cpod%21%3D%22%22%2Ckubernetes_io_hostname%3D~%22.%2A%22%7D%5B5m%5D%29+%3E+0%29%0A++++++++ (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x758c950f76d0>: Failed to resolve 'prometheus' ([Errno -3] Temporary failure in name resolution)"))
+2025-03-12 16:40:39,625 - kubernetes-anomaly-detector - ERROR - Failed to get CPU usage data
+2025-03-12 16:40:39,627 - kubernetes-anomaly-detector - ERROR - Error querying Prometheus: HTTPConnectionPool(host='prometheus', port=9090): Max retries exceeded with url: /api/v1/query?query=%0A++++++++topk%2820%2Csum%28container_memory_usage_bytes%7Bpod%21%3D%22%22%2Ckubernetes_io_hostname%3D~%22.%2A%22%7D%29+by+%28pod%2C+kubernetes_io_hostname%29%29%0A++++++++ (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x758c9509c0d0>: Failed to resolve 'prometheus' ([Errno -3] Temporary failure in name resolution)"))
+2025-03-12 16:40:39,627 - kubernetes-anomaly-detector - ERROR - Failed to get memory usage data
+2025-03-12 16:40:39,631 - kubernetes-anomaly-detector - ERROR - Error querying Prometheus: HTTPConnectionPool(host='prometheus', port=9090): Max retries exceeded with url: /api/v1/query?query=%0A++++++++topk%2820%2C+sum%28rate%28container_fs_writes_bytes_total%7Bpod%21%3D%22%22%2Ckubernetes_io_hostname%3D~%22.%2A%22%7D%5B5m%5D%29%29+by+%28pod%2Cdevice%2Ckubernetes_io_hostname%29%29%0A++++++++ (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x758c950f7b20>: Failed to resolve 'prometheus' ([Errno -3] Temporary failure in name resolution)"))
+2025-03-12 16:40:39,631 - kubernetes-anomaly-detector - ERROR - Failed to get disk write data
+2025-03-12 16:40:39,633 - kubernetes-anomaly-detector - ERROR - Error querying Prometheus: HTTPConnectionPool(host='prometheus', port=9090): Max retries exceeded with url: /api/v1/query?query=%0A++++++++topk%2820%2Crate%28container_network_transmit_bytes_total%7Bname%21%3D%22%22%2Cpod%21%3D%22%22%2Ckubernetes_io_hostname%3D~%22.%2A%22%7D%5B5m%5D%29%29%0A++++++++ (Caused by NameResolutionError("<urllib3.connection.HTTPConnection object at 0x758c950deb80>: Failed to resolve 'prometheus' ([Errno -3] Temporary failure in name resolution)"))
+2025-03-12 16:40:39,633 - kubernetes-anomaly-detector - ERROR - Failed to get network transmit data
+2025-03-12 16:40:39,633 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:45:39,964 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:45:39,964 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:45:39,984 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:50:40,300 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:50:40,300 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:50:40,316 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:54:08,590 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:54:08,591 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:54:08,608 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 16:55:40,636 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 16:55:40,636 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 16:55:40,654 - kubernetes-anomaly-detector - INFO - No anomalies detected

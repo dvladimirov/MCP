@@ -279,29 +279,22 @@ git_menu() {
 memory_analysis_menu() {
   display_header
   echo -e "${BLUE}Memory Analysis Tools:${NC}"
-  echo -e "${YELLOW}1)${NC} Basic Prometheus Test with AI Recommendations"
-  echo -e "${YELLOW}2)${NC} AI Memory Diagnostics"
-  echo -e "${YELLOW}3)${NC} Memory Dashboard"
-  echo -e "${YELLOW}4)${NC} Run All Memory Analysis Tools"
-  echo -e "${YELLOW}5)${NC} List Available AI Models"
-  echo -e "${YELLOW}6)${NC} Return to Main Menu"
+  echo -e "${YELLOW}1)${NC} AI Memory Diagnostics"
+  echo -e "${YELLOW}2)${NC} Memory Dashboard"
+  echo -e "${YELLOW}3)${NC} Run All Memory Analysis Tools"
+  echo -e "${YELLOW}4)${NC} List Available AI Models"
+  echo -e "${YELLOW}5)${NC} Return to Main Menu"
   echo ""
-  read -p "Enter your choice (1-6): " mem_choice
+  read -p "Enter your choice (1-5): " mem_choice
 
   case $mem_choice in
   1)
-    echo -e "\n${BLUE}Running basic Prometheus test with AI recommendations...${NC}"
-    uv run scripts/test_prometheus.py
-    echo -e "\n${GREEN}Test completed. Press Enter to continue...${NC}"
-    read
-    ;;
-  2)
     echo -e "\n${BLUE}Running AI Memory Diagnostics...${NC}"
     uv run scripts/ai_memory_diagnostics.py
     echo -e "\n${GREEN}Analysis completed. Press Enter to continue...${NC}"
     read
     ;;
-  3)
+  2)
     echo -e "\n${BLUE}Running Memory Dashboard...${NC}"
     read -p "Run once or continuous monitoring? (once/cont): " dashboard_mode
     if [ "$dashboard_mode" == "once" ]; then
@@ -313,11 +306,11 @@ memory_analysis_menu() {
     echo -e "\n${GREEN}Dashboard closed. Press Enter to continue...${NC}"
     read
     ;;
-  4)
+  3)
     echo -e "\n${BLUE}Running all analysis tools...${NC}"
 
     echo -e "\n${PURPLE}1. Basic Prometheus test with AI recommendations${NC}"
-    uv run scripts/test_prometheus.py
+    uv run scripts/test_prometheus.py --quiet
 
     echo -e "\n${PURPLE}2. AI Memory Diagnostics${NC}"
     uv run scripts/ai_memory_diagnostics.py
@@ -328,13 +321,13 @@ memory_analysis_menu() {
     echo -e "\n${GREEN}All analyses completed. Press Enter to continue...${NC}"
     read
     ;;
-  5)
+  4)
     echo -e "\n${BLUE}Listing available AI models...${NC}"
     uv run scripts/ai_memory_diagnostics.py --list-models
     echo -e "\n${GREEN}Press Enter to continue...${NC}"
     read
     ;;
-  6)
+  5)
     display_main_menu
     return
     ;;
@@ -352,19 +345,21 @@ memory_analysis_menu() {
 prometheus_menu() {
   display_header
   echo -e "${BLUE}Prometheus Tests & Memory Stress:${NC}"
-  echo -e "${YELLOW}1)${NC} Run Prometheus Test"
+  echo -e "${YELLOW}1)${NC} Run Prometheus Test with AI Recommendations"
   echo -e "${YELLOW}2)${NC} Start Memory Stress Container"
   echo -e "${YELLOW}3)${NC} Stop Memory Stress Container"
   echo -e "${YELLOW}4)${NC} Show Container Status"
   echo -e "${YELLOW}5)${NC} Simulate Memory Pressure"
-  echo -e "${YELLOW}6)${NC} Return to Main Menu"
+  echo -e "${YELLOW}6)${NC} Run Kubernetes Metrics Generator (for AI Analysis)"
+  echo -e "${YELLOW}7)${NC} Run AI Anomaly Analysis"
+  echo -e "${YELLOW}8)${NC} Return to Main Menu"
   echo ""
-  read -p "Enter your choice (1-6): " prom_choice
+  read -p "Enter your choice (1-8): " prom_choice
 
   case $prom_choice in
   1)
-    echo -e "\n${BLUE}Running Prometheus Test...${NC}"
-    uv run scripts/test_prometheus.py
+    echo -e "\n${BLUE}Running Prometheus Test with AI Recommendations...${NC}"
+    uv run scripts/test_prometheus.py --quiet
     echo -e "\n${GREEN}Test completed. Press Enter to continue...${NC}"
     read
     ;;
@@ -446,6 +441,224 @@ prometheus_menu() {
     read
     ;;
   6)
+    echo -e "\n${BLUE}Running Kubernetes Metrics Generator...${NC}"
+    
+    # Check if the metrics generator script exists
+    if [ ! -f "$PROJECT_ROOT/scripts/k8s_dummy_data_generator.py" ]; then
+      echo -e "${RED}Error: Kubernetes metrics generator script not found at $PROJECT_ROOT/scripts/k8s_dummy_data_generator.py${NC}"
+      echo -e "\n${YELLOW}Press Enter to continue...${NC}"
+      read
+      return
+    fi
+    
+    # Configuration options for the metrics generator
+    read -p "Enter number of pods to simulate (default: 20): " pod_count
+    pod_count=${pod_count:-20}
+    
+    read -p "Enter HTTP port for metrics server (default: 9091): " http_port
+    http_port=${http_port:-9091}
+    
+    read -p "Generate intentional anomalies? (y/n, default: n): " generate_anomalies
+    if [[ "$generate_anomalies" =~ ^[Yy]$ ]]; then
+      ANOMALY_FLAG="--anomalies"
+    else
+      ANOMALY_FLAG=""
+    fi
+    
+    read -p "Update interval in seconds (default: 5): " interval
+    interval=${interval:-5}
+    
+    read -p "Run in background? (y/n, default: n): " run_background
+    
+    if [[ "$run_background" =~ ^[Yy]$ ]]; then
+      # Run in background with log file
+      LOGFILE="$PROJECT_ROOT/logs/k8s_metrics_$(date +%Y%m%d_%H%M%S).log"
+      mkdir -p "$PROJECT_ROOT/logs"
+      
+      echo -e "${BLUE}Starting Kubernetes metrics generator in background...${NC}"
+      echo -e "${YELLOW}Log file: $LOGFILE${NC}"
+      
+      uv run scripts/k8s_dummy_data_generator.py --pods $pod_count --http-port $http_port --interval $interval $ANOMALY_FLAG > "$LOGFILE" 2>&1 &
+      GENERATOR_PID=$!
+      
+      echo -e "${GREEN}Metrics generator started with PID: $GENERATOR_PID${NC}"
+      echo -e "${YELLOW}Use ${GREEN}./kill_k8s_generators.sh${YELLOW} to stop it when done${NC}"
+      
+    else
+      # Run in foreground
+      echo -e "${BLUE}Starting Kubernetes metrics generator...${NC}"
+      echo -e "${YELLOW}Press Ctrl+C to stop when done${NC}"
+      
+      uv run scripts/k8s_dummy_data_generator.py --pods $pod_count --http-port $http_port --interval $interval $ANOMALY_FLAG
+    fi
+    
+    # After generator completes (if in foreground), ask if user wants to run AI analysis
+    if [[ ! "$run_background" =~ ^[Yy]$ ]]; then
+      echo -e "\n${YELLOW}Would you like to run AI analysis on the metrics? (y/n)${NC}"
+      read -p "> " run_analysis
+      
+      if [[ "$run_analysis" =~ ^[Yy]$ ]]; then
+        if [ -f "$PROJECT_ROOT/scripts/ai_anomaly_analysis.py" ]; then
+          echo -e "${BLUE}Running AI anomaly analysis...${NC}"
+          uv run scripts/ai_anomaly_analysis.py
+        else
+          echo -e "${RED}Error: AI analysis script not found at $PROJECT_ROOT/scripts/ai_anomaly_analysis.py${NC}"
+        fi
+      fi
+    fi
+    
+    echo -e "\n${GREEN}Press Enter to continue...${NC}"
+    read
+    ;;
+  7)
+    echo -e "\n${BLUE}Running AI Anomaly Analysis...${NC}"
+    
+    # Check if the AI analysis script exists
+    if [ ! -f "$PROJECT_ROOT/scripts/ai_anomaly_analysis.py" ]; then
+      echo -e "${RED}Error: AI anomaly analysis script not found at $PROJECT_ROOT/scripts/ai_anomaly_analysis.py${NC}"
+      echo -e "\n${YELLOW}Press Enter to continue...${NC}"
+      read
+      return
+    fi
+    
+    # Present a submenu for analysis options
+    echo -e "${BLUE}AI Anomaly Analysis Options:${NC}"
+    echo -e "${YELLOW}1)${NC} Quick Analysis (last 15 minutes)"
+    echo -e "${YELLOW}2)${NC} Standard Analysis (last hour)"
+    echo -e "${YELLOW}3)${NC} Detailed Analysis (last 6 hours)"
+    echo -e "${YELLOW}4)${NC} Custom Timeframe Analysis"
+    echo -e "${YELLOW}5)${NC} Real-time Analysis (current state)"
+    echo -e "${YELLOW}6)${NC} Compare with Historical Data"
+    echo -e "${YELLOW}7)${NC} List Available AI Models"
+    echo -e "${YELLOW}8)${NC} Return to Menu"
+    echo ""
+    read -p "Enter your choice (1-8): " analysis_choice
+    
+    case $analysis_choice in
+    1)
+      # Quick Analysis (15 minutes)
+      timeframe="15m"
+      echo -e "${BLUE}Running quick analysis (last 15 minutes)...${NC}"
+      ;;
+    2)
+      # Standard Analysis (1 hour)
+      timeframe="1h"
+      echo -e "${BLUE}Running standard analysis (last hour)...${NC}"
+      ;;
+    3)
+      # Detailed Analysis (6 hours)
+      timeframe="6h"
+      echo -e "${BLUE}Running detailed analysis (last 6 hours)...${NC}"
+      ;;
+    4)
+      # Custom Timeframe
+      echo -e "${BLUE}Enter a custom timeframe:${NC}"
+      echo -e "${YELLOW}Examples: 30m (30 minutes), 2h (2 hours), 1d (1 day)${NC}"
+      read -p "Timeframe: " timeframe
+      echo -e "${BLUE}Running analysis with custom timeframe: $timeframe...${NC}"
+      ;;
+    5)
+      # Real-time Analysis
+      timeframe="now"
+      echo -e "${BLUE}Running real-time analysis (current state)...${NC}"
+      ;;
+    6)
+      # Compare with Historical Data
+      echo -e "${BLUE}Enter the current timeframe to analyze:${NC}"
+      read -p "Current timeframe (e.g., 15m): " timeframe
+      echo -e "${BLUE}Enter the historical timeframe to compare with:${NC}"
+      read -p "Historical timeframe (e.g., 1d): " historical_timeframe
+      echo -e "${BLUE}Running comparative analysis between now ($timeframe) and past ($historical_timeframe)...${NC}"
+      COMPARE_FLAG="--compare-with=$historical_timeframe"
+      ;;
+    7)
+      # List Available Models
+      echo -e "${BLUE}Listing available AI models...${NC}"
+      uv run scripts/ai_anomaly_analysis.py --list-models
+      echo -e "\n${GREEN}Press Enter to continue...${NC}"
+      read
+      return
+      ;;
+    8)
+      # Return to menu
+      return
+      ;;
+    *)
+      echo -e "${RED}Invalid choice. Using default timeframe (1h).${NC}"
+      timeframe="1h"
+      ;;
+    esac
+    
+    # Get additional options
+    read -p "Specify a particular AI model to use (or press Enter to use default): " model_choice
+    if [ -n "$model_choice" ]; then
+      MODEL_FLAG="--model=$model_choice"
+    else
+      MODEL_FLAG=""
+    fi
+    
+    # Check if Prometheus is running - metrics are needed for analysis
+    if docker compose ps | grep -q prometheus; then
+      echo -e "${GREEN}Prometheus is running and collecting metrics.${NC}"
+    else
+      echo -e "${YELLOW}Warning: Prometheus does not appear to be running.${NC}"
+      echo -e "${YELLOW}The analysis may not have access to recent metrics.${NC}"
+      
+      read -p "Would you like to start Prometheus now? (y/n): " start_prometheus
+      if [[ "$start_prometheus" =~ ^[Yy]$ ]]; then
+        echo -e "${BLUE}Starting Prometheus...${NC}"
+        docker compose up -d prometheus
+        echo -e "${YELLOW}Waiting for Prometheus to initialize...${NC}"
+        sleep 5
+      fi
+    fi
+    
+    read -p "Enable verbose output? (y/n, default: n): " verbose
+    if [[ "$verbose" =~ ^[Yy]$ ]]; then
+      VERBOSE_FLAG="--verbose"
+    else
+      VERBOSE_FLAG=""
+    fi
+    
+    # Check if we need to do a comparison analysis
+    if [ -n "$COMPARE_FLAG" ]; then
+      echo -e "${BLUE}Starting comparative analysis between timeframes: $timeframe and $historical_timeframe${NC}"
+      uv run scripts/ai_anomaly_analysis.py --timeframe="$timeframe" $VERBOSE_FLAG $MODEL_FLAG $COMPARE_FLAG
+    else
+      # Run the standard analysis
+      echo -e "${BLUE}Starting AI anomaly analysis with timeframe: $timeframe${NC}"
+      uv run scripts/ai_anomaly_analysis.py --timeframe="$timeframe" $VERBOSE_FLAG $MODEL_FLAG
+    fi
+    
+    # Check if we generated a report file
+    LATEST_REPORT=$(find "$PROJECT_ROOT" -name "ai_anomaly_analysis_*.md" -type f -printf "%T@ %p\n" | sort -n | tail -1 | cut -f2- -d" ")
+    
+    if [ -n "$LATEST_REPORT" ] && [ -f "$LATEST_REPORT" ]; then
+      echo -e "\n${GREEN}Analysis report saved to: ${YELLOW}$LATEST_REPORT${NC}"
+      
+      # Ask if user wants to view the report
+      read -p "View the analysis report now? (y/n, default: y): " view_report
+      if [[ ! "$view_report" =~ ^[Nn]$ ]]; then
+        # Try to find a pager
+        if command -v less &> /dev/null; then
+          less "$LATEST_REPORT"
+        elif command -v more &> /dev/null; then
+          more "$LATEST_REPORT"
+        else
+          # Fall back to cat if no pager is available
+          cat "$LATEST_REPORT"
+        fi
+      fi
+      
+      # Note: Dashboard update functionality has been deprecated
+      echo -e "\n${YELLOW}Note: The K8s dashboard update functionality has been removed.${NC}"
+      echo -e "${YELLOW}The AI analysis report is still available at: ${GREEN}$LATEST_REPORT${NC}"
+    fi
+    
+    echo -e "\n${GREEN}Analysis completed. Press Enter to continue...${NC}"
+    read
+    ;;
+  8)
     display_main_menu
     return
     ;;
@@ -817,7 +1030,6 @@ grafana_menu() {
     ;;
   6)
     display_main_menu
-    return
     ;;
   *)
     echo -e "${RED}Invalid choice. Press Enter to try again.${NC}"
@@ -829,5 +1041,83 @@ grafana_menu() {
   grafana_menu
 }
 
+# Runs the AI anomaly analysis
+ai_analyze() {
+  # Check if the AI analysis script exists
+  if [ ! -f "$PROJECT_ROOT/scripts/ai_anomaly_analysis.py" ]; then
+    echo -e "${RED}Error: AI anomaly analysis script not found at $PROJECT_ROOT/scripts/ai_anomaly_analysis.py${NC}"
+    return 1
+  fi
+
+  # Process arguments
+  local TIMEFRAME="1h"  # Default timeframe
+  local VERBOSE_FLAG=""
+  local MODEL_FLAG=""
+  
+  # Parse command line arguments
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --timeframe=*)
+        TIMEFRAME="${1#*=}"
+        shift
+        ;;
+      --timeframe)
+        TIMEFRAME="$2"
+        shift 2
+        ;;
+      --verbose)
+        VERBOSE_FLAG="--verbose"
+        shift
+        ;;
+      --model=*)
+        MODEL_FLAG="--model=${1#*=}"
+        shift
+        ;;
+      --model)
+        MODEL_FLAG="--model=$2"
+        shift 2
+        ;;
+      *)
+        echo -e "${YELLOW}Ignoring unknown option: $1${NC}"
+        shift
+        ;;
+    esac
+  done
+  
+  echo -e "${BLUE}Running AI Anomaly Analysis with timeframe: $TIMEFRAME${NC}"
+  
+  # Check if Prometheus is running
+  if docker compose ps | grep -q prometheus; then
+    echo -e "${GREEN}Prometheus is running and collecting metrics.${NC}"
+  else
+    echo -e "${YELLOW}Warning: Prometheus does not appear to be running.${NC}"
+    echo -e "${YELLOW}Starting Prometheus to ensure metrics are available...${NC}"
+    docker compose up -d prometheus
+    echo -e "${YELLOW}Waiting for Prometheus to initialize...${NC}"
+    sleep 5
+  fi
+  
+  # Run the analysis
+  uv run scripts/ai_anomaly_analysis.py --timeframe="$TIMEFRAME" $VERBOSE_FLAG $MODEL_FLAG
+  return $?
+}
+
 # Main script execution
+if [[ "$1" == "ai_analyze" ]]; then
+  # Remove the first argument and pass the rest to the ai_analyze function
+  shift
+  ai_analyze "$@"
+  exit $?
+fi
+
+# Check for direct commands
+if [ "$1" == "update-dashboard" ]; then
+  update_dashboard
+  exit 0
+elif [ "$1" == "run-tests" ]; then
+  run_tests
+  exit 0
+fi
+
+# If no command provided, show the menu
 display_main_menu

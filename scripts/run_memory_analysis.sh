@@ -23,7 +23,7 @@ read -p "Enter choice (1-5): " choice
 case $choice in
     1)
         echo -e "\nRunning basic Prometheus test with AI recommendations..."
-        uv run test_prometheus.py
+        uv run test_prometheus.py --quiet
         ;;
     2)
         echo -e "\nRunning AI Memory Diagnostics..."
@@ -37,7 +37,7 @@ case $choice in
         echo -e "\nRunning all analysis tools..."
         
         echo -e "\n1. Basic Prometheus test with AI recommendations"
-        uv run test_prometheus.py
+        uv run test_prometheus.py --quiet
         
         echo -e "\n2. AI Memory Diagnostics"
         uv run ai_memory_diagnostics.py

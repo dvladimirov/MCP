@@ -18,7 +18,7 @@ if docker ps | grep -q prometheus; then
   echo "Prometheus is already running"
 else
   echo "Starting Prometheus services with Docker Compose..."
-  docker-compose up -d
+  docker compose up -d
 
   # Wait for services to start
   echo "Waiting for services to start..."
@@ -60,7 +60,8 @@ echo ""
 echo "========================================================"
 echo "Running Prometheus Memory Test"
 echo "========================================================"
-uv run test_prometheus.py
+echo "Note: Using quiet mode - AI recommendations are shown but detailed alert lists are hidden"
+uv run test_prometheus.py --quiet
 
 # Ask if user wants to simulate memory pressure
 echo ""
@@ -89,7 +90,8 @@ if [[ "$simulate_pressure" == "y" || "$simulate_pressure" == "Y" ]]; then
 
   # Run the test again to see alerts
   echo "Running Prometheus test again to check for alerts..."
-  uv run test_prometheus.py
+  echo "Note: Using quiet mode - AI recommendations are shown but detailed alert lists are hidden"
+  uv run test_prometheus.py --quiet
 fi
 
 # Clean up
@@ -111,10 +113,10 @@ echo "========================================================"
 read -p "Stop Docker containers? (y/n): " stop_docker
 if [[ "$stop_docker" == "y" || "$stop_docker" == "Y" ]]; then
   echo "Stopping Docker containers..."
-  docker-compose down
+  docker compose down
 else
   echo "Docker containers are still running."
-  echo "To stop them later, run: docker-compose down"
+  echo "To stop them later, run: docker compose down"
 fi
 
 echo ""

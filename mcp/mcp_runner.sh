@@ -1,1 +1,0 @@
-scripts/mcp_runner.sh

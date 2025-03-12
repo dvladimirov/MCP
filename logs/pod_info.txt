@@ -1,0 +1,180 @@
+Pod: kafka-1554
+  Container: kafka-container
+  Image: confluentinc/cp-kafka:latest
+  Node: master-1
+  IP: 10.244.0.1
+
+Pod: kafka-2099
+  Container: kafka-container
+  Image: confluentinc/cp-kafka:latest
+  Node: worker-2
+  IP: 10.244.0.2
+
+Pod: elasticsearch-1989
+  Container: es-container
+  Image: elasticsearch:7.13.0
+  Node: worker-1
+  IP: 10.244.0.3
+
+Pod: elasticsearch-7253
+  Container: es-container
+  Image: elasticsearch:7.13.0
+  Node: worker-2
+  IP: 10.244.0.4
+
+Pod: prometheus-2937
+  Container: prom-container
+  Image: prom/prometheus:v2.30.0
+  Node: worker-1
+  IP: 10.244.0.5
+
+Pod: kafka-2895
+  Container: kafka-container
+  Image: confluentinc/cp-kafka:latest
+  Node: worker-2
+  IP: 10.244.0.6
+
+Pod: mongodb-7821
+  Container: mongo-container
+  Image: mongo:4.4
+  Node: worker-1
+  IP: 10.244.0.7
+
+Pod: rabbitmq-7999
+  Container: rabbitmq-container
+  Image: rabbitmq:3.9
+  Node: worker-2
+  IP: 10.244.0.8
+
+Pod: mysql-1976
+  Container: mysql-container
+  Image: mysql:8
+  Node: worker-2
+  IP: 10.244.0.9
+
+Pod: postgres-1917
+  Container: postgres-container
+  Image: postgres:13
+  Node: worker-2
+  IP: 10.244.0.10
+
+Pod: grafana-4115
+  Container: grafana-container
+  Image: grafana/grafana:latest
+  Node: master-1
+  IP: 10.244.0.11
+
+Pod: rabbitmq-9186
+  Container: rabbitmq-container
+  Image: rabbitmq:3.9
+  Node: worker-1
+  IP: 10.244.0.12
+
+Pod: elasticsearch-5951
+  Container: es-container
+  Image: elasticsearch:7.13.0
+  Node: master-1
+  IP: 10.244.0.13
+
+Pod: mongodb-8647
+  Container: mongo-container
+  Image: mongo:4.4
+  Node: worker-2
+  IP: 10.244.0.14
+
+Pod: redis-1137
+  Container: redis-container
+  Image: redis:6
+  Node: worker-1
+  IP: 10.244.0.15
+
+Pod: elasticsearch-7077
+  Container: es-container
+  Image: elasticsearch:7.13.0
+  Node: worker-2
+  IP: 10.244.0.16
+
+Pod: elasticsearch-3563
+  Container: es-container
+  Image: elasticsearch:7.13.0
+  Node: master-1
+  IP: 10.244.0.17
+
+Pod: rabbitmq-2098
+  Container: rabbitmq-container
+  Image: rabbitmq:3.9
+  Node: master-1
+  IP: 10.244.0.18
+
+Pod: kafka-6947
+  Container: kafka-container
+  Image: confluentinc/cp-kafka:latest
+  Node: worker-2
+  IP: 10.244.0.19
+
+Pod: elasticsearch-3352
+  Container: es-container
+  Image: elasticsearch:7.13.0
+  Node: worker-2
+  IP: 10.244.0.20
+
+Pod: postgres-4881
+  Container: postgres-container
+  Image: postgres:13
+  Node: worker-1
+  IP: 10.244.0.21
+
+Pod: prometheus-1181
+  Container: prom-container
+  Image: prom/prometheus:v2.30.0
+  Node: worker-2
+  IP: 10.244.0.22
+
+Pod: postgres-2154
+  Container: postgres-container
+  Image: postgres:13
+  Node: worker-2
+  IP: 10.244.0.23
+
+Pod: rabbitmq-8549
+  Container: rabbitmq-container
+  Image: rabbitmq:3.9
+  Node: worker-2
+  IP: 10.244.0.24
+
+Pod: mysql-8420
+  Container: mysql-container
+  Image: mysql:8
+  Node: worker-2
+  IP: 10.244.0.25
+
+Pod: kafka-1243
+  Container: kafka-container
+  Image: confluentinc/cp-kafka:latest
+  Node: master-1
+  IP: 10.244.0.26
+
+Pod: grafana-2513
+  Container: grafana-container
+  Image: grafana/grafana:latest
+  Node: master-1
+  IP: 10.244.0.27
+
+Pod: rabbitmq-2313
+  Container: rabbitmq-container
+  Image: rabbitmq:3.9
+  Node: master-1
+  IP: 10.244.0.28
+
+Pod: mysql-7930
+  Container: mysql-container
+  Image: mysql:8
+  Node: worker-2
+  IP: 10.244.0.29
+
+Pod: rabbitmq-9219
+  Container: rabbitmq-container
+  Image: rabbitmq:3.9
+  Node: worker-2
+  IP: 10.244.0.30
+

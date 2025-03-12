@@ -7,10 +7,20 @@ import os
 import sys
 import json
 import time
+import argparse
 from datetime import datetime, timedelta
 from langflow import MCPAIComponent
 
-def test_prometheus(prometheus_url=None):
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description="Test Prometheus integration with MCP")
+    parser.add_argument("--url", help="Prometheus URL (default: http://localhost:9090)", 
+                        default=os.getenv("PROMETHEUS_URL", "http://localhost:9090"))
+    parser.add_argument("-q", "--quiet", action="store_true", 
+                        help="Reduce verbosity and suppress detailed alert information")
+    return parser.parse_args()
+
+def test_prometheus(prometheus_url=None, quiet=False):
     """Test the Prometheus integration with MCP"""
     
     # Use provided Prometheus URL or default
@@ -212,7 +222,7 @@ def test_prometheus(prometheus_url=None):
                 else:
                     node_memory_alerts.append(alert)
             
-            # Get AI recommendations for alerts
+            # Get AI recommendations for alerts - ALWAYS show AI recommendations regardless of quiet mode
             if node_memory_alerts or container_memory_alerts:
                 ai_recommendations = get_ai_recommendations(mcp, node_memory_alerts, container_memory_alerts)
                 
@@ -220,157 +230,161 @@ def test_prometheus(prometheus_url=None):
                 print(ai_recommendations)
                 print("===================================================")
             
-            # Display node memory alerts
-            if node_memory_alerts:
-                print("\n  Node Memory Alerts:")
-                for i, alert in enumerate(node_memory_alerts):
-                    alert_name = alert.get('labels', {}).get('alertname', 'Unknown')
-                    severity = alert.get('labels', {}).get('severity', 'unknown')
-                    state = alert.get('state', 'unknown')
-                    instance = alert.get('labels', {}).get('instance', 'unknown')
-                    summary = alert.get('annotations', {}).get('summary', 'No summary available')
-                    
-                    print(f"  Alert {i+1}: {alert_name}")
-                    print(f"    Instance: {instance}")
-                    print(f"    Severity: {severity}")
-                    print(f"    State: {state}")
-                    print(f"    Summary: {summary}")
-                    
-                    # For firing alerts, recommend actions
-                    if state.lower() == 'firing':
-                        if 'high' in alert_name.lower():
-                            print("    Recommended action: Consider freeing up memory or increasing capacity")
-                        elif 'critical' in alert_name.lower():
-                            print("    Recommended action: Immediately free up memory, potential system instability")
-                        elif 'medium' in alert_name.lower():
-                            print("    Recommended action: Monitor memory usage trends")
-                        elif 'low' in alert_name.lower():
-                            print("    Recommended action: Normal operations, no action needed")
-                        elif 'swap' in alert_name.lower():
-                            print("    Recommended action: Increase swap space or reduce memory pressure")
-            
-            # Display container memory alerts
-            if container_memory_alerts:
-                print("\n  Container Memory Alerts:")
-                for i, alert in enumerate(container_memory_alerts):
-                    alert_name = alert.get('labels', {}).get('alertname', 'Unknown')
-                    severity = alert.get('labels', {}).get('severity', 'unknown')
-                    state = alert.get('state', 'unknown')
-                    
-                    # Get container information
-                    container_name = alert.get('labels', {}).get('name', 
-                                     alert.get('labels', {}).get('container_name', 'unknown'))
-                    
-                    summary = alert.get('annotations', {}).get('summary', 'No summary available')
-                    
-                    print(f"  Alert {i+1}: {alert_name}")
-                    print(f"    Container: {container_name}")
-                    print(f"    Severity: {severity}")
-                    print(f"    State: {state}")
-                    print(f"    Summary: {summary}")
-                    
-                    # For firing alerts, recommend actions specific to containers
-                    if state.lower() == 'firing':
-                        print("    Recommended actions:")
-                        print("      - Increase container memory limit")
-                        print("      - Optimize container application memory usage")
-                        print("      - Check for memory leaks in the container application")
-                        print("      - Consider scaling horizontally instead of vertically")
+            # Only show detailed alert information if not in quiet mode
+            if not quiet:
+                # Display node memory alerts
+                if node_memory_alerts:
+                    print("\n  Node Memory Alerts:")
+                    for i, alert in enumerate(node_memory_alerts):
+                        alert_name = alert.get('labels', {}).get('alertname', 'Unknown')
+                        severity = alert.get('labels', {}).get('severity', 'unknown')
+                        state = alert.get('state', 'unknown')
+                        instance = alert.get('labels', {}).get('instance', 'unknown')
+                        summary = alert.get('annotations', {}).get('summary', 'No summary available')
+                        
+                        print(f"  Alert {i+1}: {alert_name}")
+                        print(f"    Instance: {instance}")
+                        print(f"    Severity: {severity}")
+                        print(f"    State: {state}")
+                        print(f"    Summary: {summary}")
+                        
+                        # For firing alerts, recommend actions
+                        if state.lower() == 'firing':
+                            if 'high' in alert_name.lower():
+                                print("    Recommended action: Consider freeing up memory or increasing capacity")
+                            elif 'critical' in alert_name.lower():
+                                print("    Recommended action: Immediately free up memory, potential system instability")
+                            elif 'medium' in alert_name.lower():
+                                print("    Recommended action: Monitor memory usage trends")
+                            elif 'low' in alert_name.lower():
+                                print("    Recommended action: Normal operations, no action needed")
+                            elif 'swap' in alert_name.lower():
+                                print("    Recommended action: Increase swap space or reduce memory pressure")
                 
-                # Query container memory usage
-                try:
-                    print("\n  Current Container Memory Usage:")
+                # Display container memory alerts
+                if container_memory_alerts:
+                    print("\n  Container Memory Alerts:")
+                    for i, alert in enumerate(container_memory_alerts):
+                        alert_name = alert.get('labels', {}).get('alertname', 'Unknown')
+                        severity = alert.get('labels', {}).get('severity', 'unknown')
+                        state = alert.get('state', 'unknown')
+                        
+                        # Get container information
+                        container_name = alert.get('labels', {}).get('name', 
+                                         alert.get('labels', {}).get('container_name', 'unknown'))
+                        
+                        summary = alert.get('annotations', {}).get('summary', 'No summary available')
+                        
+                        print(f"  Alert {i+1}: {alert_name}")
+                        print(f"    Container: {container_name}")
+                        print(f"    Severity: {severity}")
+                        print(f"    State: {state}")
+                        print(f"    Summary: {summary}")
+                        
+                        # For firing alerts, recommend actions specific to containers
+                        if state.lower() == 'firing':
+                            print("    Recommended actions:")
+                            print("      - Increase container memory limit")
+                            print("      - Optimize container application memory usage")
+                            print("      - Check for memory leaks in the container application")
+                            print("      - Consider scaling horizontally instead of vertically")
                     
-                    query = 'container_memory_usage_bytes{container_name!=""}'
-                    mem_usage_result = mcp.prometheus_query(query)
-                    
-                    query_limit = 'container_spec_memory_limit_bytes{container_name!=""}'
-                    mem_limit_result = mcp.prometheus_query(query_limit)
-                    
-                    usage_data = mem_usage_result.get('data', {}).get('result', [])
-                    limit_data = mem_limit_result.get('data', {}).get('result', [])
-                    
-                    if usage_data and limit_data:
-                        for result in usage_data:
-                            container = result.get('metric', {}).get('container_name', 'unknown')
+                        # Query container memory usage
+                        try:
+                            print("\n  Current Container Memory Usage:")
                             
-                            # Skip pause containers and empty names
-                            if container in ['', 'POD', 'pause'] or not container:
-                                continue
-                                
-                            try:
-                                # Get memory usage in bytes
-                                memory_bytes = float(result.get('value', [0, 0])[1])
-                                memory_mb = memory_bytes / (1024 * 1024)
-                                
-                                # Find memory limit for this container
-                                memory_limit_bytes = next(
-                                    (float(r.get('value', [0, 0])[1]) 
-                                     for r in limit_data 
-                                     if r.get('metric', {}).get('container_name') == container),
-                                    float('inf')
-                                )
-                                
-                                # Handle unlimited containers
-                                if memory_limit_bytes == float('inf') or memory_limit_bytes == 0:
-                                    print(f"    Container '{container}': {memory_mb:.2f} MB (no limit set)")
-                                    continue
+                            query = 'container_memory_usage_bytes{container_name!=""}'
+                            mem_usage_result = mcp.prometheus_query(query)
+                            
+                            query_limit = 'container_spec_memory_limit_bytes{container_name!=""}'
+                            mem_limit_result = mcp.prometheus_query(query_limit)
+                            
+                            usage_data = mem_usage_result.get('data', {}).get('result', [])
+                            limit_data = mem_limit_result.get('data', {}).get('result', [])
+                            
+                            if usage_data and limit_data:
+                                for result in usage_data:
+                                    container = result.get('metric', {}).get('container_name', 'unknown')
                                     
-                                memory_limit_mb = memory_limit_bytes / (1024 * 1024)
-                                usage_percent = (memory_bytes / memory_limit_bytes) * 100
-                                
-                                # Determine status
-                                if usage_percent > 80:
-                                    status = "CRITICAL"
-                                elif usage_percent > 60:
-                                    status = "WARNING"
-                                elif usage_percent > 40:
-                                    status = "ELEVATED"
-                                else:
-                                    status = "NORMAL"
-                                
-                                print(f"    Container '{container}': {memory_mb:.2f} MB / {memory_limit_mb:.2f} MB ({usage_percent:.1f}%) - {status}")
-                            except (ValueError, TypeError, ZeroDivisionError) as e:
-                                print(f"    Container '{container}': Error processing data - {e}")
-                    else:
-                        print("    No container memory data available")
-                except Exception as e:
-                    print(f"    Error querying container memory: {e}")
+                                    # Skip pause containers and empty names
+                                    if container in ['', 'POD', 'pause'] or not container:
+                                        continue
+                                        
+                                    try:
+                                        # Get memory usage in bytes
+                                        memory_bytes = float(result.get('value', [0, 0])[1])
+                                        memory_mb = memory_bytes / (1024 * 1024)
+                                        
+                                        # Find memory limit for this container
+                                        memory_limit_bytes = next(
+                                            (float(r.get('value', [0, 0])[1]) 
+                                             for r in limit_data 
+                                             if r.get('metric', {}).get('container_name') == container),
+                                            float('inf')
+                                        )
+                                        
+                                        # Handle unlimited containers
+                                        if memory_limit_bytes == float('inf') or memory_limit_bytes == 0:
+                                            print(f"    Container '{container}': {memory_mb:.2f} MB (no limit set)")
+                                            continue
+                                            
+                                        memory_limit_mb = memory_limit_bytes / (1024 * 1024)
+                                        usage_percent = (memory_bytes / memory_limit_bytes) * 100
+                                        
+                                        # Determine status
+                                        if usage_percent > 80:
+                                            status = "CRITICAL"
+                                        elif usage_percent > 60:
+                                            status = "WARNING"
+                                        elif usage_percent > 40:
+                                            status = "ELEVATED"
+                                        else:
+                                            status = "NORMAL"
+                                        
+                                        print(f"    Container '{container}': {memory_mb:.2f} MB / {memory_limit_mb:.2f} MB ({usage_percent:.1f}%) - {status}")
+                                    except (ValueError, TypeError, ZeroDivisionError) as e:
+                                        print(f"    Container '{container}': Error processing data - {e}")
+                            else:
+                                print("    No container memory data available")
+                        except Exception as e:
+                            print(f"    Error querying container memory: {e}")
         else:
-            print("  No memory-related alerts found.")
-            
-            # Create sample/demo alerts if no real ones exist
-            print("\n  Demo memory alerts (for testing):")
-            print("  Alert 1: HighMemoryUsage")
-            print("    Severity: warning")
-            print("    State: firing")
-            print("    Summary: High memory usage on demo-host-1")
-            print("    Memory usage: 87.5%")
-            print("    Recommended action: Free up memory by stopping unnecessary processes")
-            
-            print("\n  Alert 2: CriticalMemoryUsage")
-            print("    Severity: critical")
-            print("    State: firing")
-            print("    Summary: Critical memory usage on demo-host-2")
-            print("    Memory usage: 96.3%")
-            print("    Recommended action: Immediately add memory or stop critical processes")
-            
-            print("\n  Alert 3: SwapUsageHigh")
-            print("    Severity: warning")
-            print("    State: pending")
-            print("    Summary: High swap usage on demo-host-3")
-            print("    Swap usage: 82.7%")
-            print("    Recommended action: Increase swap space or reduce memory consumption")
+            if not quiet:
+                print("  No memory-related alerts found.")
+                
+                # Create sample/demo alerts if no real ones exist
+                print("\n  Demo memory alerts (for testing):")
+                print("  Alert 1: HighMemoryUsage")
+                print("    Severity: warning")
+                print("    State: firing")
+                print("    Summary: High memory usage on demo-host-1")
+                print("    Memory usage: 87.5%")
+                print("    Recommended action: Free up memory by stopping unnecessary processes")
+                
+                print("\n  Alert 2: CriticalMemoryUsage")
+                print("    Severity: critical")
+                print("    State: firing")
+                print("    Summary: Critical memory usage on demo-host-2")
+                print("    Memory usage: 96.3%")
+                print("    Recommended action: Immediately add memory or stop critical processes")
+                
+                print("\n  Alert 3: SwapUsageHigh")
+                print("    Severity: warning")
+                print("    State: pending")
+                print("    Summary: High swap usage on demo-host-3")
+                print("    Swap usage: 82.7%")
+                print("    Recommended action: Increase swap space or reduce memory consumption")
     except Exception as e:
         print(f"  Alerts query failed: {e}")
         
-        # Show dummy alerts if the query failed
-        print("\n  Demo memory alerts (query failed):")
-        print("  Alert 1: HighMemoryUsage (Demo)")
-        print("    Severity: warning")
-        print("    State: firing")
-        print("    Summary: High memory usage on demo-host")
-        print("    Recommended action: Free up memory by stopping unnecessary processes")
+        if not quiet:
+            # Show dummy alerts if the query failed
+            print("\n  Demo memory alerts (query failed):")
+            print("  Alert 1: HighMemoryUsage (Demo)")
+            print("    Severity: warning")
+            print("    State: firing")
+            print("    Summary: High memory usage on demo-host")
+            print("    Recommended action: Free up memory by stopping unnecessary processes")
     
     # Generate a memory health report
     print("\n4. Memory health report:")
@@ -433,21 +447,22 @@ def test_prometheus(prometheus_url=None):
                     
                     print(f"    Status: {status}")
                     
-                    # Recommendations
-                    print("    Recommendations:")
-                    if mem_usage_pct > 90:
-                        print("     - Immediately free up memory by stopping non-critical processes")
-                        print("     - Consider adding additional memory capacity")
-                        print("     - Check for memory leaks in applications")
-                    elif mem_usage_pct > 80:
-                        print("     - Monitor memory usage closely")
-                        print("     - Plan for potential memory expansion")
-                        print("     - Optimize memory-intensive applications")
-                    elif mem_usage_pct > 70:
-                        print("     - Review memory usage trends")
-                        print("     - Identify memory-intensive applications")
-                    else:
-                        print("     - Continue regular monitoring")
+                    # Recommendations - only print if not in quiet mode
+                    if not quiet:
+                        print("    Recommendations:")
+                        if mem_usage_pct > 90:
+                            print("     - Immediately free up memory by stopping non-critical processes")
+                            print("     - Consider adding additional memory capacity")
+                            print("     - Check for memory leaks in applications")
+                        elif mem_usage_pct > 80:
+                            print("     - Monitor memory usage closely")
+                            print("     - Plan for potential memory expansion")
+                            print("     - Optimize memory-intensive applications")
+                        elif mem_usage_pct > 70:
+                            print("     - Review memory usage trends")
+                            print("     - Identify memory-intensive applications")
+                        else:
+                            print("     - Continue regular monitoring")
                 except (ValueError, TypeError, IndexError) as e:
                     print(f"    Error processing data: {e}")
         else:
@@ -491,32 +506,35 @@ def test_prometheus(prometheus_url=None):
                 print(f"    Memory Usage: {usage_pct:.2f}%")
                 print(f"    Status: {status}")
                 
-                print("    Recommendations:")
-                if status == "CRITICAL":
-                    print("     - Immediately free up memory by stopping non-critical processes")
-                    print("     - Consider adding additional memory capacity")
-                    print("     - Check for memory leaks in applications")
-                elif status == "WARNING":
-                    print("     - Monitor memory usage closely")
-                    print("     - Plan for potential memory expansion")
-                    print("     - Optimize memory-intensive applications")
-                else:
-                    print("     - Continue regular monitoring")
+                # Only print recommendations if not in quiet mode
+                if not quiet:
+                    print("    Recommendations:")
+                    if status == "CRITICAL":
+                        print("     - Immediately free up memory by stopping non-critical processes")
+                        print("     - Consider adding additional memory capacity")
+                        print("     - Check for memory leaks in applications")
+                    elif status == "WARNING":
+                        print("     - Monitor memory usage closely")
+                        print("     - Plan for potential memory expansion")
+                        print("     - Optimize memory-intensive applications")
+                    else:
+                        print("     - Continue regular monitoring")
     except Exception as e:
         print(f"  Memory report generation failed: {e}")
         
-        # Show demo report if query failed
-        print("  Memory Health Report (demo data - error fallback):")
-        print("  Host: demo-host-fallback")
-        print("    Total Memory: 16.00 GB")
-        print("    Used Memory: 13.60 GB")
-        print("    Available Memory: 2.40 GB")
-        print("    Memory Usage: 85.00%")
-        print("    Status: WARNING - High memory usage")
-        print("    Recommendations:")
-        print("     - Monitor memory usage closely")
-        print("     - Plan for potential memory expansion")
-        print("     - Optimize memory-intensive applications")
+        if not quiet:
+            # Show demo report if query failed - only in verbose mode
+            print("  Memory Health Report (demo data - error fallback):")
+            print("  Host: demo-host-fallback")
+            print("    Total Memory: 16.00 GB")
+            print("    Used Memory: 13.60 GB")
+            print("    Available Memory: 2.40 GB")
+            print("    Memory Usage: 85.00%")
+            print("    Status: WARNING - High memory usage")
+            print("    Recommendations:")
+            print("     - Monitor memory usage closely")
+            print("     - Plan for potential memory expansion")
+            print("     - Optimize memory-intensive applications")
     
     print("\nPrometheus memory monitoring test completed.")
 
@@ -661,8 +679,5 @@ def get_ai_recommendations(mcp, node_alerts, container_alerts):
                "- Consider implementing memory limits or quotas"
 
 if __name__ == "__main__":
-    prometheus_url = None
-    if len(sys.argv) > 1:
-        prometheus_url = sys.argv[1]
-    
-    test_prometheus(prometheus_url) 
+    args = parse_arguments()
+    test_prometheus(args.url, args.quiet) 

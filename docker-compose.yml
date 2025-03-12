@@ -14,6 +14,7 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/usr/share/prometheus/console_libraries'
       - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
     restart: unless-stopped
     networks:
       - monitoring
@@ -76,9 +77,10 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
       - ./grafana/provisioning:/etc/grafana/provisioning
     restart: unless-stopped
     depends_on:
@@ -105,6 +107,33 @@ services:
     depends_on:
       - grafana
       - prometheus
+    restart: unless-stopped
+    networks:
+      - monitoring
+
+  # Kubernetes Performance Anomaly Detection Service
+  k8s-anomaly-detection:
+    image: python:3.9-slim
+    container_name: k8s-anomaly-detection
+    ports:
+      - "8086:8086"
+    volumes:
+      - ./mcp_grafana_bridge:/app
+      - ./scripts:/app/scripts
+    working_dir: /app
+    command: >
+      bash -c "pip install flask requests numpy && 
+              python mcp_anomaly_detection.py"
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+      - K8S_SCRIPT_PATH=/app/scripts/kubernetes_performance_anomalies.py
+      - ANOMALY_DETECTION_INTERVAL=300
+      - ANOMALY_API_PORT=8086
+      - DETECTION_ENABLED=true
+    depends_on:
+      - prometheus
+      - cadvisor
+      - node-exporter
     restart: unless-stopped
     networks:
       - monitoring

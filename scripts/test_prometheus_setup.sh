@@ -89,7 +89,7 @@ run_test "External Prometheus integration" "python test_prometheus_external.py $
 
 # Step 5: Test standard Prometheus test script
 echo "Step 5: Testing with standard test script..."
-run_test "Standard Prometheus test" "python test_prometheus.py"
+run_test "Standard Prometheus test" "python test_prometheus.py --quiet"
 
 echo "======================================================"
 echo "All tests completed"

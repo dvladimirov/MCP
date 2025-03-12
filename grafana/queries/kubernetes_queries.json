@@ -1,0 +1,142 @@
+{
+  "metadata": {
+    "description": "Prometheus queries for Kubernetes metrics used in the dashboard",
+    "version": "1.0",
+    "created": "2024-03-12"
+  },
+  "categories": {
+    "cpu": {
+      "description": "CPU usage metrics",
+      "queries": {
+        "top_by_usage": {
+          "query": "topk(20, rate(container_cpu_usage_seconds_total{container_name!='POD',container_name!='',pod!=''}[5m]))",
+          "description": "Top 20 pods by CPU usage rate",
+          "unit": "cores/s",
+          "anomaly_threshold": 0.8
+        },
+        "usage_by_pod": {
+          "query": "rate(container_cpu_usage_seconds_total{container_name!='POD',container_name!='',pod='$pod_name'}[5m])",
+          "description": "CPU usage rate for a specific pod",
+          "unit": "cores/s",
+          "anomaly_threshold": 0.8
+        },
+        "usage_by_node": {
+          "query": "sum by(pod) (rate(container_cpu_usage_seconds_total{container_name!='POD',container_name!='',pod!='',kubernetes_io_hostname='$node_name'}[5m]))",
+          "description": "CPU usage by pod for a specific node",
+          "unit": "cores/s",
+          "anomaly_threshold": 0.8
+        }
+      }
+    },
+    "memory": {
+      "description": "Memory usage metrics",
+      "queries": {
+        "top_by_usage": {
+          "query": "topk(20, container_memory_usage_bytes{container_name!='POD',container_name!='',pod!=''})",
+          "description": "Top 20 pods by memory usage",
+          "unit": "bytes",
+          "anomaly_threshold": 1073741824
+        },
+        "usage_by_pod": {
+          "query": "container_memory_usage_bytes{container_name!='POD',container_name!='',pod='$pod_name'}",
+          "description": "Memory usage for a specific pod",
+          "unit": "bytes",
+          "anomaly_threshold": 1073741824
+        },
+        "usage_by_node": {
+          "query": "sum by(pod) (container_memory_usage_bytes{container_name!='POD',container_name!='',pod!='',kubernetes_io_hostname='$node_name'})",
+          "description": "Memory usage by pod for a specific node",
+          "unit": "bytes",
+          "anomaly_threshold": 1073741824
+        }
+      }
+    },
+    "disk": {
+      "description": "Disk I/O metrics",
+      "queries": {
+        "top_reads_bytes": {
+          "query": "topk(10, sum by(pod) (rate(container_fs_reads_bytes_total{container_name!='POD'}[5m])))",
+          "description": "Top 10 pods by disk read bytes",
+          "unit": "bytes/s",
+          "anomaly_threshold": 10485760
+        },
+        "top_writes_bytes": {
+          "query": "topk(10, sum by(pod) (rate(container_fs_writes_bytes_total{container_name!='POD'}[5m])))",
+          "description": "Top 10 pods by disk write bytes",
+          "unit": "bytes/s",
+          "anomaly_threshold": 10485760
+        },
+        "top_reads_ops": {
+          "query": "topk(10, rate(container_fs_reads_total{container_name!='POD',container_name!='',pod!=''}[5m]))",
+          "description": "Top 10 pods by disk read operations",
+          "unit": "ops/s",
+          "anomaly_threshold": 1000
+        },
+        "top_writes_ops": {
+          "query": "topk(10, rate(container_fs_writes_total{container_name!='POD',container_name!='',pod!=''}[5m]))",
+          "description": "Top 10 pods by disk write operations",
+          "unit": "ops/s",
+          "anomaly_threshold": 1000
+        }
+      }
+    },
+    "network": {
+      "description": "Network traffic metrics",
+      "queries": {
+        "top_receive_bandwidth": {
+          "query": "topk(10, sum by(pod) (rate(container_network_receive_bytes_total{container_name!='POD'}[5m]) * 8))",
+          "description": "Top 10 pods by network receive bandwidth",
+          "unit": "bits/s",
+          "anomaly_threshold": 104857600
+        },
+        "top_transmit_bandwidth": {
+          "query": "topk(10, sum by(pod) (rate(container_network_transmit_bytes_total{container_name!='POD'}[5m]) * 8))",
+          "description": "Top 10 pods by network transmit bandwidth",
+          "unit": "bits/s",
+          "anomaly_threshold": 104857600
+        },
+        "top_receive_errors": {
+          "query": "topk(20, rate(container_network_receive_errors_total{container_name!='',pod!=''}[5m]))",
+          "description": "Top 20 pods by network receive errors",
+          "unit": "errors/s",
+          "anomaly_threshold": 10
+        },
+        "top_transmit_errors": {
+          "query": "topk(20, rate(container_network_transmit_errors_total{container_name!='POD',container_name!='',pod!=''}[5m]))",
+          "description": "Top 20 pods by network transmit errors",
+          "unit": "errors/s",
+          "anomaly_threshold": 10
+        }
+      }
+    },
+    "anomaly_detection": {
+      "description": "Queries specifically designed for anomaly detection",
+      "queries": {
+        "cpu_spikes": {
+          "query": "rate(container_cpu_usage_seconds_total{container_name!='POD',container_name!='',pod!=''}[5m]) > 0.8",
+          "description": "Pods with CPU usage above 80% threshold",
+          "unit": "boolean",
+          "anomaly_threshold": 1
+        },
+        "memory_spikes": {
+          "query": "container_memory_usage_bytes{container_name!='POD',container_name!='',pod!=''} > 1073741824",
+          "description": "Pods with memory usage above 1GB threshold",
+          "unit": "boolean",
+          "anomaly_threshold": 1
+        },
+        "disk_io_spikes": {
+          "query": "rate(container_fs_writes_bytes_total{container_name!='POD',container_name!='',pod!=''}[5m]) > 10485760",
+          "description": "Pods with disk write rate above 10MB/s threshold",
+          "unit": "boolean",
+          "anomaly_threshold": 1
+        },
+        "network_error_spikes": {
+          "query": "rate(container_network_receive_errors_total{container_name!='',pod!=''}[5m]) > 10 or rate(container_network_transmit_errors_total{container_name!='POD',container_name!='',pod!=''}[5m]) > 10",
+          "description": "Pods with network error rate above 10 errors/s threshold",
+          "unit": "boolean",
+          "anomaly_threshold": 1
+        }
+      }
+    }
+  }
+} 

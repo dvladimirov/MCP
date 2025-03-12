@@ -1,0 +1,62 @@
+{
+  "metadata": {
+    "timestamp": "2025-03-12T23:34:28.696864",
+    "simulation_info": {
+      "pods": 5,
+      "nodes": 3,
+      "namespaces": 4,
+      "anomalies_enabled": true
+    }
+  },
+  "anomalies": [],
+  "metrics_summary": {
+    "container": {
+      "count": 205,
+      "sample_metrics": [
+        {
+          "name": "container_cpu_usage_seconds_total{container_name=\"redis-9216\",container=\"redis-9216\",id=\"/docker/pod-469940\",image=\"redis:6\",name=\"redis-9216\",namespace=\"kube-system\",pod=\"redis-9216\",pod_name=\"redis-9216\",kubernetes_io_hostname=\"worker-1\"} 2903.248592751247",
+          "pod": "redis-9216",
+          "value": "N/A"
+        },
+        {
+          "name": "container_cpu_usage_seconds_rate{container_name=\"redis-9216\",container=\"redis-9216\",id=\"/docker/pod-469940\",image=\"redis:6\",name=\"redis-9216\",namespace=\"kube-system\",pod=\"redis-9216\",pod_name=\"redis-9216\",kubernetes_io_hostname=\"worker-1\"} 0.19035197555475056",
+          "pod": "redis-9216",
+          "value": "N/A"
+        },
+        {
+          "name": "container_cpu_cfs_periods_total{container_name=\"redis-9216\",container=\"redis-9216\",id=\"/docker/pod-469940\",image=\"redis:6\",name=\"redis-9216\",namespace=\"kube-system\",pod=\"redis-9216\",pod_name=\"redis-9216\",kubernetes_io_hostname=\"worker-1\"} 152520",
+          "pod": "redis-9216",
+          "value": "N/A"
+        }
+      ]
+    },
+    "kube": {
+      "count": 115,
+      "sample_metrics": [
+        {
+          "name": "kube_pod_container_resource_requests{container=\"redis-9216\",namespace=\"kube-system\",pod=\"redis-9216\",node=\"worker-1\"}{resource=\"cpu\"} 1.4",
+          "pod": "redis-9216",
+          "value": "N/A"
+        },
+        {
+          "name": "kube_pod_container_resource_limits{container=\"redis-9216\",namespace=\"kube-system\",pod=\"redis-9216\",node=\"worker-1\"}{resource=\"cpu\"} 2.0",
+          "pod": "redis-9216",
+          "value": "N/A"
+        },
+        {
+          "name": "kube_pod_container_resource_usage{container=\"redis-9216\",namespace=\"kube-system\",pod=\"redis-9216\",node=\"worker-1\"}{resource=\"cpu\"} 0.19035197555475056",
+          "pod": "redis-9216",
+          "value": "N/A"
+        }
+      ]
+    }
+  },
+  "prometheus_queries": {
+    "cpu_usage": "topk(10, rate(container_cpu_usage_seconds_total{container_name!=\"POD\"}[5m]))",
+    "memory_usage": "topk(10, container_memory_usage_bytes{container_name!=\"POD\"})",
+    "network_receive": "topk(10, rate(container_network_receive_bytes_total{container_name!=\"POD\"}[5m]) * 8 / 1000000)",
+    "network_transmit": "topk(10, rate(container_network_transmit_bytes_total{container_name!=\"POD\"}[5m]) * 8 / 1000000)",
+    "disk_reads": "topk(10, rate(container_fs_reads_bytes_total{container_name!=\"POD\"}[5m]))",
+    "disk_writes": "topk(10, rate(container_fs_writes_bytes_total{container_name!=\"POD\"}[5m]))"
+  }
+}

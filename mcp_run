@@ -1,9 +1,30 @@
 #!/bin/bash
-# Simple wrapper to run mcp_runner.sh from the correct directory
+# MCP Run - Main entry point for MCP project
+# This is the primary script that users should execute to interact with MCP
 
-# Get the absolute path of this script
+# Get the absolute path of this script and set up environment
 SCRIPT_PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 cd "$SCRIPT_PATH"
 
-# Run the actual runner script
-"$SCRIPT_PATH/scripts/mcp_runner.sh" "$@" 
+# Set up base environment variables if needed
+export MCP_ROOT="$SCRIPT_PATH"
+export PYTHONPATH="$MCP_ROOT:$PYTHONPATH"
+
+# Ensure the runner script exists
+RUNNER_SCRIPT="$SCRIPT_PATH/scripts/mcp_runner.sh"
+if [ ! -f "$RUNNER_SCRIPT" ]; then
+    echo "Error: Could not find the MCP runner script at $RUNNER_SCRIPT"
+    echo "Please make sure you have a complete MCP installation."
+    exit 1
+fi
+
+# Special handling for ai-analyze command
+if [ "$1" == "ai-analyze" ]; then
+    # Remove the first argument and pass the rest to the AI analysis function
+    shift
+    "$RUNNER_SCRIPT" "ai_analyze" "$@"
+    exit $?
+fi
+
+# Run the actual runner script, passing all arguments through
+"$RUNNER_SCRIPT" "$@" 
