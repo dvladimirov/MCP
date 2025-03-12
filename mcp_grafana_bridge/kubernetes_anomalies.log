@@ -42,3 +42,6 @@
 2025-03-12 16:55:40,636 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
 2025-03-12 16:55:40,636 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
 2025-03-12 16:55:40,654 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-12 23:00:23,389 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-12 23:00:23,389 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-12 23:00:23,407 - kubernetes-anomaly-detector - INFO - No anomalies detected

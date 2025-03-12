@@ -6,6 +6,7 @@ import argparse
 import tempfile
 import subprocess
 from typing import Dict, List, Optional, Any, Tuple
+from datetime import datetime
 
 # Add the parent directory to Python path for proper imports
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -15,66 +16,190 @@ if parent_dir not in sys.path:
 
 from langflow import MCPAIComponent
 
+def analyze_git_diff(repo_url: str, commit_sha: str, 
+                   target_commit: str = 'HEAD', 
+                   capture_output: bool = False) -> Dict[str, Any]:
+    """
+    Analyze the diff between two commits in a Git repository.
+    
+    Args:
+        repo_url: URL of the Git repository to analyze
+        commit_sha: Base commit SHA to compare from
+        target_commit: Target commit to compare to (default: HEAD)
+        capture_output: If True, capture and return the output instead of printing
+        
+    Returns:
+        Dict containing diff analysis information if capture_output=True
+    """
+    results = {}
+    
+    # Helper to log results
+    def log_result(key: str, value: Any):
+        if capture_output:
+            results[key] = value
+        else:
+            print(f"\n=== {key} ===")
+            if isinstance(value, (dict, list)):
+                print(json.dumps(value, indent=2))
+            else:
+                print(value)
+    
+    log_result("analysis_type", "git_diff")
+    log_result("repository", repo_url)
+    log_result("base_commit", commit_sha)
+    log_result("target_commit", target_commit)
+    log_result("timestamp", datetime.now().isoformat())
+    
+    # Validate the commit SHA
+    try:
+        is_valid = validate_commit_sha(repo_url, commit_sha)
+        if not is_valid:
+            log_result("error", f"Invalid commit SHA: {commit_sha}")
+            
+            if capture_output:
+                return results
+            return {"status": "error", "message": f"Invalid commit SHA: {commit_sha}"}
+    except Exception as e:
+        log_result("error", f"Error validating commit SHA: {str(e)}")
+        
+        if capture_output:
+            return results
+        return {"status": "error", "message": str(e)}
+    
+    # Get the diff between commits
+    try:
+        diff_text = get_diff_between_commits(repo_url, commit_sha, target_commit)
+        
+        # Extract basic statistics
+        diff_stats = {
+            "total_lines": len(diff_text.splitlines()),
+            "files_changed": diff_text.count("diff --git"),
+            "additions": diff_text.count("\n+") - diff_text.count("\n+++"),
+            "deletions": diff_text.count("\n-") - diff_text.count("\n---"),
+        }
+        
+        log_result("diff_stats", diff_stats)
+        
+        # Check for requirements.txt changes
+        try:
+            old_requirements = get_file_from_commit(repo_url, commit_sha, "requirements.txt")
+            new_requirements = get_file_from_commit(repo_url, target_commit, "requirements.txt")
+            
+            if old_requirements is not None and new_requirements is not None:
+                added, removed, changed = compare_requirements(new_requirements, old_requirements)
+                
+                req_changes = {
+                    "added": added,
+                    "removed": removed,
+                    "changed": changed,
+                }
+                
+                log_result("requirements_changes", req_changes)
+        except Exception as e:
+            log_result("requirements_analysis_error", str(e))
+        
+        # Try to get a more detailed diff analysis using MCPAIComponent
+        try:
+            mcp = MCPAIComponent(mcp_server_url="http://localhost:8000")
+            
+            # Check if the analyze_diff endpoint exists
+            models = mcp.list_models()
+            has_diff_analyzer = any(model.get('id') == 'git-diff-analyzer' for model in models)
+            
+            if has_diff_analyzer:
+                api_result = mcp.analyze_diff(repo_url, commit_sha, target_commit)
+                
+                if api_result and isinstance(api_result, dict) and 'status' in api_result:
+                    log_result("api_analysis", api_result)
+        except Exception as e:
+            log_result("api_analysis_error", str(e))
+    
+    except Exception as e:
+        log_result("error", str(e))
+    
+    # Return results if in capture mode
+    if capture_output:
+        return results
+    else:
+        return {"status": "completed", "output": "printed to console"}
+
 def compare_requirements(current_reqs: str, previous_reqs: str) -> Tuple[List[str], List[str], List[str]]:
     """
     Compare two requirements.txt files and identify added, removed, and changed dependencies.
     
     Args:
-        current_reqs: Content of the current requirements.txt
-        previous_reqs: Content of the previous requirements.txt
+        current_reqs: Content of the current requirements.txt file
+        previous_reqs: Content of the previous requirements.txt file
         
     Returns:
         Tuple of (added, removed, changed) dependencies
     """
+    
     def parse_requirements(content: str) -> Dict[str, str]:
-        """Parse requirements into a dictionary of {package: version}"""
+        """Parse requirements.txt content into a dictionary of package name -> version."""
+        if not content or content.strip() == "":
+            return {}
+            
         result = {}
-        for line in content.strip().split('\n'):
-            line = line.strip()
-            if not line or line.startswith('#'):
+        for line in content.splitlines():
+            # Skip empty lines and comments
+            if not line.strip() or line.strip().startswith('#'):
                 continue
                 
-            # Handle various formats like package==1.0.0, package>=1.0.0, etc.
-            if '==' in line:
-                package, version = line.split('==', 1)
-                result[package.strip()] = version.strip()
+            # Handle different formats: pkg==version, pkg>=version, etc.
+            parts = line.split('==')
+            if len(parts) == 2:
+                # Standard version pinning (pkg==1.0.0)
+                pkg_name = parts[0].strip()
+                version = parts[1].strip()
+                result[pkg_name] = version
             elif '>=' in line:
-                package, version = line.split('>=', 1)
-                result[package.strip()] = f">={version.strip()}"
-            elif '<=' in line:
-                package, version = line.split('<=', 1)
-                result[package.strip()] = f"<={version.strip()}"
+                # Minimum version (pkg>=1.0.0)
+                parts = line.split('>=')
+                pkg_name = parts[0].strip()
+                version = parts[1].strip()
+                result[pkg_name] = f">={version}"
             elif '>' in line:
-                package, version = line.split('>', 1)
-                result[package.strip()] = f">{version.strip()}"
+                # Greater than version (pkg>1.0.0)
+                parts = line.split('>')
+                pkg_name = parts[0].strip()
+                version = parts[1].strip()
+                result[pkg_name] = f">{version}"
+            elif '<=' in line:
+                # Maximum version (pkg<=1.0.0)
+                parts = line.split('<=')
+                pkg_name = parts[0].strip()
+                version = parts[1].strip()
+                result[pkg_name] = f"<={version}"
             elif '<' in line:
-                package, version = line.split('<', 1)
-                result[package.strip()] = f"<{version.strip()}"
+                # Less than version (pkg<1.0.0)
+                parts = line.split('<')
+                pkg_name = parts[0].strip()
+                version = parts[1].strip()
+                result[pkg_name] = f"<{version}"
             else:
-                # Handle packages without version specifications
-                result[line.strip()] = "any"
+                # Just package name or other format
+                pkg_name = line.strip()
+                result[pkg_name] = "any"
                 
         return result
     
-    current_dict = parse_requirements(current_reqs)
-    previous_dict = parse_requirements(previous_reqs)
+    current_pkgs = parse_requirements(current_reqs)
+    previous_pkgs = parse_requirements(previous_reqs)
     
-    # Find added, removed, and changed dependencies
-    added = []
-    for pkg in current_dict:
-        if pkg not in previous_dict:
-            added.append(f"{pkg}=={current_dict[pkg]}")
+    # Find added packages
+    added = [f"{pkg}=={version}" for pkg, version in current_pkgs.items() 
+             if pkg not in previous_pkgs]
     
-    removed = []
-    for pkg in previous_dict:
-        if pkg not in current_dict:
-            removed.append(f"{pkg}=={previous_dict[pkg]}")
+    # Find removed packages
+    removed = [f"{pkg}=={version}" for pkg, version in previous_pkgs.items() 
+               if pkg not in current_pkgs]
     
-    changed = []
-    for pkg in current_dict:
-        if pkg in previous_dict and current_dict[pkg] != previous_dict[pkg]:
-            changed.append(f"{pkg}: {previous_dict[pkg]} -> {current_dict[pkg]}")
-            
+    # Find changed versions
+    changed = [f"{pkg}: {previous_pkgs[pkg]} -> {current_pkgs[pkg]}" 
+               for pkg in current_pkgs 
+               if pkg in previous_pkgs and current_pkgs[pkg] != previous_pkgs[pkg]]
+    
     return added, removed, changed
 
 def get_file_from_commit(repo_url: str, commit_sha: str, file_path: str) -> Optional[str]:
@@ -83,399 +208,365 @@ def get_file_from_commit(repo_url: str, commit_sha: str, file_path: str) -> Opti
     
     Args:
         repo_url: URL of the Git repository
-        commit_sha: Commit SHA to get the file from
+        commit_sha: Commit SHA to extract the file from
         file_path: Path to the file within the repository
         
     Returns:
-        Content of the file or None if the file doesn't exist
+        Content of the file or None if the file doesn't exist in that commit
     """
-    print(f"Retrieving {file_path} from commit {commit_sha} in repository {repo_url}")
-    
-    with tempfile.TemporaryDirectory() as temp_dir:
+    try:
+        # Create a temporary directory
+        temp_dir = tempfile.mkdtemp()
+        
+        # Clone the repository (shallow clone to save time and space)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, temp_dir],
+            check=True,
+            capture_output=True
+        )
+        
+        # Check out the specific commit
         try:
-            # Clone the repository without the commit SHA
-            print(f"Cloning repository {repo_url}...")
-            clone_cmd = ["git", "clone", repo_url, temp_dir]
+            subprocess.run(
+                ["git", "checkout", commit_sha],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True
+            )
+        except subprocess.CalledProcessError:
+            # Try fetching the commit first
+            subprocess.run(
+                ["git", "fetch", "--depth", "1", "origin", commit_sha],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True
+            )
             
-            result = subprocess.run(clone_cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                print(f"Error cloning repository: {result.stderr}")
-                return None
-            
-            # Try to get the file content directly from git show
-            try:
-                print(f"Getting file content at commit {commit_sha}...")
-                show_cmd = ["git", "show", f"{commit_sha}:{file_path}"]
-                show_result = subprocess.run(show_cmd, cwd=temp_dir, capture_output=True, text=True)
-                
-                if show_result.returncode == 0:
-                    return show_result.stdout
-                
-                print(f"File not found using git show, trying checkout method...")
-                
-                # If git show fails, try to checkout the commit and read the file
-                checkout_cmd = ["git", "checkout", commit_sha]
-                checkout_result = subprocess.run(checkout_cmd, cwd=temp_dir, capture_output=True, text=True)
-                
-                if checkout_result.returncode != 0:
-                    print(f"Error checking out commit: {checkout_result.stderr}")
-                    return None
-                
-                # Read the file directly from the filesystem
-                file_fullpath = os.path.join(temp_dir, file_path)
-                if os.path.exists(file_fullpath):
-                    with open(file_fullpath, 'r') as f:
-                        file_content = f.read()
-                    print(f"File {file_path} found and read successfully")
-                    return file_content
-                else:
-                    print(f"File {file_path} not found in commit {commit_sha}")
-                    # List files in the repo root to help debug
-                    print("Listing files in repository root:")
-                    ls_cmd = ["ls", "-la"]
-                    ls_result = subprocess.run(ls_cmd, cwd=temp_dir, capture_output=True, text=True)
-                    if ls_result.returncode == 0:
-                        print(ls_result.stdout)
-                    return None
-                
-            except subprocess.CalledProcessError as e:
-                print(f"Error accessing file in commit: {e}")
-                return None
-        except Exception as e:
-            print(f"Error accessing repository: {e}")
+            # Now try to check out again
+            subprocess.run(
+                ["git", "checkout", commit_sha],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True
+            )
+        
+        # Check if the file exists
+        file_full_path = os.path.join(temp_dir, file_path)
+        if not os.path.isfile(file_full_path):
             return None
+        
+        # Read the file content
+        with open(file_full_path, 'r', encoding='utf-8', errors='replace') as f:
+            content = f.read()
+        
+        # Clean up
+        import shutil
+        shutil.rmtree(temp_dir)
+        
+        return content
+    except Exception as e:
+        print(f"Error getting file '{file_path}' from commit {commit_sha}: {e}")
+        # Clean up on error
+        try:
+            import shutil
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+        return None
 
 def validate_commit_sha(repo_url: str, commit_sha: str) -> bool:
     """
-    Validate if a commit SHA exists in the repository.
+    Validate if a commit SHA exists in a repository.
     
     Args:
         repo_url: URL of the Git repository
-        commit_sha: SHA of the commit to validate
+        commit_sha: Commit SHA to validate
         
     Returns:
-        True if the commit exists, False otherwise
+        True if the commit SHA exists, False otherwise
     """
-    print(f"Validating commit SHA: {commit_sha}")
-    
-    with tempfile.TemporaryDirectory() as temp_dir:
+    try:
+        # Create a temporary directory
+        temp_dir = tempfile.mkdtemp()
+        
+        # Clone the repository (shallow clone to save time and space)
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, temp_dir],
+            check=True,
+            capture_output=True
+        )
+        
+        # Try to show the commit details
         try:
-            # Clone the repository 
-            print(f"Cloning repository for validation...")
-            clone_cmd = ["git", "clone", "--bare", repo_url, temp_dir]
+            # First, try to fetch the specific commit
+            subprocess.run(
+                ["git", "fetch", "--depth", "1", "origin", commit_sha],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True
+            )
             
-            result = subprocess.run(clone_cmd, capture_output=True, text=True)
-            if result.returncode != 0:
-                print(f"Error cloning repository: {result.stderr}")
-                return False
+            # Then, check if the commit exists
+            result = subprocess.run(
+                ["git", "cat-file", "-t", commit_sha],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True,
+                text=True
+            )
             
-            # Check if commit exists
-            check_cmd = ["git", "cat-file", "-e", commit_sha]
-            check_result = subprocess.run(check_cmd, cwd=temp_dir, capture_output=True, text=True)
+            # Clean up
+            import shutil
+            shutil.rmtree(temp_dir)
             
-            if check_result.returncode == 0:
-                print(f"Commit {commit_sha} exists in the repository")
-                return True
-            else:
-                print(f"Commit {commit_sha} does not exist in the repository")
-                return False
-                
-        except Exception as e:
-            print(f"Error validating commit SHA: {e}")
+            # If the command succeeded, and returned "commit", the SHA is valid
+            return result.stdout.strip() == "commit"
+        except subprocess.CalledProcessError:
+            # Clean up on error
+            import shutil
+            shutil.rmtree(temp_dir)
             return False
+    except Exception as e:
+        print(f"Error validating commit SHA: {e}")
+        # Clean up on error
+        try:
+            import shutil
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+        return False
 
 def get_diff_between_commits(repo_url: str, base_commit: str, target_commit: str = 'HEAD') -> str:
     """
-    Get the diff between two commits.
+    Get the diff between two commits in a Git repository.
     
     Args:
         repo_url: URL of the Git repository
         base_commit: Base commit SHA
-        target_commit: Target commit SHA (defaults to HEAD)
+        target_commit: Target commit SHA (default: HEAD)
         
     Returns:
-        Diff output as a string
+        Diff text between the commits
     """
-    print(f"Getting diff between {base_commit} and {target_commit}...")
-    
-    with tempfile.TemporaryDirectory() as temp_dir:
+    try:
+        # Create a temporary directory
+        temp_dir = tempfile.mkdtemp()
+        
+        # Clone the repository
+        subprocess.run(
+            ["git", "clone", "--depth", "1", repo_url, temp_dir],
+            check=True,
+            capture_output=True
+        )
+        
+        # Try to fetch both commits
+        subprocess.run(
+            ["git", "fetch", "--depth", "1", "origin", base_commit],
+            cwd=temp_dir,
+            check=True,
+            capture_output=True
+        )
+        
+        if target_commit != 'HEAD':
+            subprocess.run(
+                ["git", "fetch", "--depth", "1", "origin", target_commit],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True
+            )
+        
+        # Get the diff
+        result = subprocess.run(
+            ["git", "diff", base_commit, target_commit],
+            cwd=temp_dir,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        
+        # Clean up
+        import shutil
+        shutil.rmtree(temp_dir)
+        
+        return result.stdout
+    except Exception as e:
+        print(f"Error getting diff between commits: {e}")
+        # Clean up on error
         try:
-            # Clone the repository
-            clone_cmd = ["git", "clone", repo_url, temp_dir]
-            clone_result = subprocess.run(clone_cmd, capture_output=True, text=True)
-            
-            if clone_result.returncode != 0:
-                print(f"Error cloning repository: {clone_result.stderr}")
-                return "Error cloning repository"
-            
-            # Get the diff
-            diff_cmd = ["git", "diff", base_commit, target_commit, "--", "requirements.txt"]
-            diff_result = subprocess.run(diff_cmd, cwd=temp_dir, capture_output=True, text=True)
-            
-            if diff_result.returncode == 0:
-                if diff_result.stdout:
-                    return diff_result.stdout
-                else:
-                    return "No differences found in requirements.txt"
-            else:
-                print(f"Error getting diff: {diff_result.stderr}")
-                return f"Error: {diff_result.stderr}"
-        except Exception as e:
-            print(f"Error: {e}")
-            return f"Error: {e}"
+            import shutil
+            shutil.rmtree(temp_dir)
+        except:
+            pass
+        return f"Error: {str(e)}"
 
 def test_git_diff(repo_url=None, compare_commit=None):
     """
-    Test the git diff functionality with requirements.txt compatibility check.
+    Test git diff functionality between two commits.
     
     Args:
         repo_url: URL of the Git repository
-        compare_commit: SHA of the commit to compare with the latest commit
+        compare_commit: Base commit SHA to compare against
     """
+    # Get repo URL from command line if not provided
+    if not repo_url and len(sys.argv) > 1:
+        repo_url = sys.argv[1]
+        
+    # Get commit SHA from command line if not provided
+    if not compare_commit and len(sys.argv) > 2:
+        compare_commit = sys.argv[2]
     
+    # Check if we have the necessary information
     if not repo_url:
         print("Error: Please provide a Git repository URL")
-        print("Usage: python test_git_diff.py <git-repo-url> [commit-sha]")
+        print("Usage: python test_git_diff.py <git-repo-url> [<commit-sha>]")
         sys.exit(1)
     
-    print(f"Analyzing repository: {repo_url}")
+    print(f"Testing Git diff for repository: {repo_url}")
     
-    # Validate commit SHA if provided
     if compare_commit:
-        print(f"Comparing with commit: {compare_commit}")
-        if not validate_commit_sha(repo_url, compare_commit):
-            print(f"Invalid commit SHA: {compare_commit}")
-            sys.exit(1)
-    
-    # Initialize the MCP component
-    try:
-        mcp = MCPAIComponent(mcp_server_url="http://localhost:8000")
-    except Exception as e:
-        print(f"Error initializing MCP component: {e}")
-        sys.exit(1)
-    
-    try:
-        # Get the diff of the last commit
-        print("Fetching diff from the MCP server...")
-        diff_info = mcp.get_git_diff(repo_url)
+        print(f"Comparing against commit: {compare_commit}")
         
-        # Extract basic commit info
-        current_commit_id = diff_info.get('commit_id', 'N/A')
-        commit_message = diff_info.get('commit_message', 'N/A')
-        commit_author = diff_info.get('commit_author', 'N/A')
-        commit_date = diff_info.get('commit_date', 'N/A')
+        # Validate the commit SHA
+        print(f"Validating commit SHA: {compare_commit}")
+        is_valid = validate_commit_sha(repo_url, compare_commit)
         
-        print("\nLatest Commit Info:")
-        print(f"Commit ID: {current_commit_id}")
-        print(f"Author: {commit_author}")
-        print(f"Date: {commit_date}")
-        print(f"Message: {commit_message}")
-        
-        # Print statistics
-        total_files = diff_info.get('total_files_changed', 0)
-        total_additions = diff_info.get('total_additions', 0)
-        total_deletions = diff_info.get('total_deletions', 0)
-        
-        print(f"\nChanges: {total_files} files changed, {total_additions} insertions(+), {total_deletions} deletions(-)")
-        
-        # Get the current requirements.txt directly from the repository
-        # We're not relying on the diff info which might be incomplete
-        with tempfile.TemporaryDirectory() as temp_dir:
-            print("\nDirectly retrieving current requirements.txt...")
-            clone_cmd = ["git", "clone", repo_url, temp_dir]
-            clone_result = subprocess.run(clone_cmd, capture_output=True, text=True)
+        if is_valid:
+            print(f"Commit SHA {compare_commit} is valid.")
             
-            if clone_result.returncode != 0:
-                print(f"Error cloning repository: {clone_result.stderr}")
-                return
+            # Get the diff
+            print(f"Getting diff between {compare_commit} and HEAD...")
+            diff = get_diff_between_commits(repo_url, compare_commit)
             
-            requirements_path = os.path.join(temp_dir, 'requirements.txt')
-            current_requirements = None
-            if os.path.exists(requirements_path):
-                with open(requirements_path, 'r') as f:
-                    current_requirements = f.read()
-                print("Found current requirements.txt")
-            else:
-                print("No requirements.txt found in the current commit")
-                # List the root directory to help debug
-                print("Listing repository root:")
-                ls_cmd = ["ls", "-la"]
-                ls_result = subprocess.run(ls_cmd, cwd=temp_dir, capture_output=True, text=True)
-                if ls_result.returncode == 0:
-                    print(ls_result.stdout)
-        
-        if compare_commit:
-            print(f"\nComparing latest commit {current_commit_id[:7]} with {compare_commit[:7]}")
+            # Show basic statistics
+            diff_lines = diff.splitlines()
+            files_changed = diff.count("diff --git")
+            additions = diff.count("\n+") - diff.count("\n+++")
+            deletions = diff.count("\n-") - diff.count("\n---")
             
-            # Get a direct diff between the commits for debugging purposes
-            manual_diff = get_diff_between_commits(repo_url, compare_commit, current_commit_id)
-            print("\nDirect git diff output for requirements.txt:")
-            print(manual_diff)
+            print(f"\nDiff Statistics:")
+            print(f"Files changed: {files_changed}")
+            print(f"Additions: {additions}")
+            print(f"Deletions: {deletions}")
+            print(f"Total diff lines: {len(diff_lines)}")
             
-            # Get requirements.txt from the specified commit
-            previous_requirements = get_file_from_commit(repo_url, compare_commit, 'requirements.txt')
+            # Check for requirements.txt changes
+            print("\nChecking for requirements.txt changes...")
+            old_requirements = get_file_from_commit(repo_url, compare_commit, "requirements.txt")
             
-            if current_requirements is not None and previous_requirements is not None:
-                print("\nAnalyzing requirements.txt compatibility...")
-                added, removed, changed = compare_requirements(current_requirements, previous_requirements)
+            if old_requirements is not None:
+                print("Found requirements.txt in the base commit.")
                 
-                if not (added or removed or changed):
-                    print("No changes to requirements.txt between commits.")
-                else:
-                    if added:
-                        print("\nAdded dependencies:")
-                        for dep in added:
-                            print(f"  + {dep}")
+                # Get current requirements.txt
+                new_requirements = get_file_from_commit(repo_url, "HEAD", "requirements.txt")
+                
+                if new_requirements is not None:
+                    print("Found requirements.txt in the current commit.")
                     
-                    if removed:
-                        print("\nRemoved dependencies:")
-                        for dep in removed:
-                            print(f"  - {dep}")
+                    # Compare requirements
+                    added, removed, changed = compare_requirements(new_requirements, old_requirements)
                     
-                    if changed:
-                        print("\nChanged dependencies:")
-                        for dep in changed:
-                            print(f"  * {dep}")
-                
-                # Ask AI to analyze compatibility
-                print("\nAsking AI to analyze requirements compatibility...")
-                
-                # Prepare the prompt
-                prompt = f"""
-                I need to analyze the compatibility between two versions of requirements.txt.
-                
-                Current requirements:
-                ```
-                {current_requirements}
-                ```
-                
-                Previous requirements (from commit {compare_commit[:7]}):
-                ```
-                {previous_requirements}
-                ```
-                
-                Changes summary:
-                - Added: {', '.join(added) if added else 'None'}
-                - Removed: {', '.join(removed) if removed else 'None'}
-                - Changed: {', '.join(changed) if changed else 'None'}
-                
-                Raw diff:
-                ```
-                {manual_diff}
-                ```
-                
-                Please analyze these changes and provide:
-                1. Are these changes compatible with the existing codebase?
-                2. Any potential dependency conflicts or issues?
-                3. Security concerns with the changes (e.g., outdated versions, known vulnerabilities)?
-                4. Recommendations for a safe upgrade path
-                5. Should this change be approved for merging? (Yes/No/Need more information)
-                """
-                
-                try:
-                    chat_response = mcp.chat(
-                        model_id="openai-gpt-chat",
-                        messages=[
-                            {"role": "system", "content": "You are an expert Python developer with deep knowledge of Python packaging, dependencies, and security. Your task is to analyze changes to requirements.txt files and provide compatibility assessments."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        max_tokens=800,
-                        temperature=0.7
-                    )
-                    
-                    choices = chat_response.get('choices', [])
-                    if choices:
-                        message = choices[0].get('message', {})
-                        content = message.get('content', '')
-                        print(f"\nAI Analysis:\n{content}")
+                    if added or removed or changed:
+                        print("\nRequirements Changes:")
+                        
+                        if added:
+                            print("\nAdded Dependencies:")
+                            for dep in added:
+                                print(f"  + {dep}")
+                        
+                        if removed:
+                            print("\nRemoved Dependencies:")
+                            for dep in removed:
+                                print(f"  - {dep}")
+                        
+                        if changed:
+                            print("\nChanged Dependencies:")
+                            for dep in changed:
+                                print(f"  ~ {dep}")
                     else:
-                        print("\nUnable to generate AI analysis.")
-                except Exception as e:
-                    print(f"\nError getting AI analysis: {e}")
+                        print("No changes to requirements.txt dependencies.")
+                else:
+                    print("requirements.txt not found in the current commit.")
             else:
-                if current_requirements is None:
-                    print("No requirements.txt found in the current commit.")
-                if previous_requirements is None:
-                    print(f"No requirements.txt found in commit {compare_commit[:7]}.")
+                print("requirements.txt not found in the base commit.")
+            
+            # Try to send the diff to the MCP server for AI analysis
+            try:
+                print("\nSending diff to MCP server for AI analysis...")
+                mcp = MCPAIComponent(mcp_server_url="http://localhost:8000")
+                
+                # Check if the analyze_diff endpoint exists
+                models = mcp.list_models()
+                has_diff_analyzer = any(model.get('id') == 'git-diff-analyzer' for model in models)
+                
+                if has_diff_analyzer:
+                    print("Found git-diff-analyzer model, sending request...")
+                    result = mcp.analyze_diff(repo_url, compare_commit)
+                    
+                    if result and isinstance(result, dict) and 'summary' in result:
+                        print("\nAI Analysis Summary:")
+                        print(result['summary'])
+                        
+                        if 'major_changes' in result:
+                            print("\nMajor Changes:")
+                            for change in result['major_changes']:
+                                print(f"  - {change}")
+                        
+                        if 'recommendations' in result:
+                            print("\nRecommendations:")
+                            for rec in result['recommendations']:
+                                print(f"  - {rec}")
+                    else:
+                        print("No summary provided in the AI analysis result.")
+                else:
+                    print("git-diff-analyzer model not found on MCP server.")
+            except Exception as e:
+                print(f"Error during AI analysis: {e}")
         else:
-            # If no comparison commit specified, show changes by file
-            if files_changed:
-                print("\nChanged Files:")
-                for i, file_info in enumerate(files_changed, 1):
-                    path = file_info.get('path', 'N/A')
-                    change_type = file_info.get('change_type', 'N/A')
-                    additions = file_info.get('additions', 0)
-                    deletions = file_info.get('deletions', 0)
-                    
-                    print(f"{i}. {path} ({change_type}): +{additions} -{deletions}")
-                    
-                    # Ask if user wants to see the diff for this file
-                    if i < len(files_changed):  # Don't ask for the last file
-                        show_diff = input(f"\nShow diff for {path}? (y/n, default: n): ").lower() == 'y'
-                        if show_diff:
-                            diff = file_info.get('diff', 'No diff available')
-                            print(f"\nDiff for {path}:\n{diff}\n")
-                            input("Press Enter to continue...")
-                    else:
-                        # Always show the diff for the last file without asking
-                        diff = file_info.get('diff', 'No diff available')
-                        print(f"\nDiff for {path}:\n{diff}\n")
-            else:
-                print("\nNo files changed in the last commit.")
+            print(f"Error: Commit SHA {compare_commit} is invalid.")
+    else:
+        print("No commit SHA provided for comparison.")
+        print("Showing the latest commit information instead.")
+        
+        try:
+            # Create a temporary directory
+            temp_dir = tempfile.mkdtemp()
             
-            # Allow the user to request generic AI analysis for any commit
-            print("\nWould you like an AI analysis of this commit? (y/n, default: y): ", end="")
-            analyze = input().lower() != 'n'
+            # Clone the repository
+            subprocess.run(
+                ["git", "clone", "--depth", "1", repo_url, temp_dir],
+                check=True,
+                capture_output=True
+            )
             
-            if analyze:
-                print("\nAsking AI to analyze the commit...")
-                
-                chat_response = mcp.chat(
-                    model_id="openai-gpt-chat",
-                    messages=[
-                        {"role": "system", "content": "You are an expert code reviewer and developer. Your task is to analyze git commit diffs and provide insights about the changes."},
-                        {"role": "user", "content": f"Please analyze this commit and provide:\n1. A summary of what changed\n2. The purpose of these changes\n3. Potential impact on the codebase\n4. Any potential issues or improvements\n\nHere's the information about the commit:\n\nCommit Message: {commit_message}\nTotal Changes: {total_files} files changed, {total_additions} insertions(+), {total_deletions} deletions(-)"}
-                    ],
-                    max_tokens=500,
-                    temperature=0.7
-                )
-                
-                choices = chat_response.get('choices', [])
-                if choices:
-                    message = choices[0].get('message', {})
-                    content = message.get('content', '')
-                    print(f"\nAI Analysis:\n{content}")
-                else:
-                    print("\nUnable to generate AI analysis.")
-    
-    except Exception as e:
-        print(f"Error analyzing diff: {e}")
-        sys.exit(1)
+            # Get latest commit info
+            result = subprocess.run(
+                ["git", "log", "-1", "--pretty=format:%h|%an|%ad|%s"],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            
+            commit_parts = result.stdout.split('|')
+            if len(commit_parts) >= 4:
+                print("\nLatest Commit:")
+                print(f"SHA: {commit_parts[0]}")
+                print(f"Author: {commit_parts[1]}")
+                print(f"Date: {commit_parts[2]}")
+                print(f"Message: {commit_parts[3]}")
+                print("\nUse this commit SHA to compare with an earlier version.")
+            
+            # Clean up
+            import shutil
+            shutil.rmtree(temp_dir)
+        except Exception as e:
+            print(f"Error getting latest commit info: {e}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Test git diff functionality with requirements.txt compatibility check")
+    parser = argparse.ArgumentParser(description="Test Git diff functionality between commits")
     parser.add_argument("repo_url", nargs="?", help="URL of the Git repository")
-    parser.add_argument("commit_sha", nargs="?", help="SHA of the commit to compare with the latest commit")
-    parser.add_argument("--help-more", action="store_true", help="Show more detailed help information")
+    parser.add_argument("commit_sha", nargs="?", help="Base commit SHA to compare against")
     
     args = parser.parse_args()
     
-    if args.help_more:
-        print("Git Diff Analyzer with Requirements.txt Compatibility Check")
-        print("=========================================================")
-        print("\nThis tool analyzes a Git repository to compare requirements.txt files between commits.")
-        print("It uses AI to assess compatibility, detect potential issues, and provide upgrade recommendations.")
-        print("\nUsage:")
-        print("  python test_git_diff.py <repository-url> [commit-sha]")
-        print("\nExamples:")
-        print("  python test_git_diff.py https://github.com/username/repo")
-        print("    - Analyzes the latest commit in the repository")
-        print("  python test_git_diff.py https://github.com/username/repo abc123")
-        print("    - Compares the latest commit with commit 'abc123', focusing on requirements.txt")
-        sys.exit(0)
-    
-    if not args.repo_url:
-        parser.print_help()
-        sys.exit(1)
-        
     test_git_diff(args.repo_url, args.commit_sha) 

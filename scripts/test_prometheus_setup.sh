@@ -2,7 +2,7 @@
 # Comprehensive Prometheus Testing Shell Script
 
 # Default values
-PROMETHEUS_URL=${1:-"https://prometheus.demo.do.prometheus.io"}
+PROMETHEUS_URL=${1:-"http://localhost:9090"}
 MCP_SERVER_URL=${2:-"http://localhost:8000"}
 
 echo "======================================================"
