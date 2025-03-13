@@ -511,127 +511,117 @@ def normalize_repo_url(repo_url: str) -> str:
     
     return repo_url
 
-def showcase_git(repo_url: str) -> Dict[str, Any]:
-    """Showcase Git repository analysis."""
-    if not repo_url:
-        print("Error: Repository URL is required for Git showcase.")
-        print("Usage: python showcase_mcp_features.py --feature git --repo-url https://github.com/username/repo")
-        return {"error": "Repository URL is required"}
+def analyze_git_repo(repo_url, commit_sha=None):
+    """
+    Analyze a Git repository and generate a report with key insights.
     
-    # Normalize the repository URL to ensure consistent format
-    repo_url = normalize_repo_url(repo_url)
-    
-    print(f"=== Showcasing Git Analysis for {repo_url} ===")
-    print("Please wait, cloning repository and analyzing data...")
-    
-    # Analyze the repository using the capture_output parameter
-    try:
-        results = git_module.analyze_repo(repo_url, capture_output=True)
+    Args:
+        repo_url: URL of the Git repository to analyze
+        commit_sha: Optional specific commit SHA to analyze
         
-        # Make sure we have the repository URL in the results
-        if 'repository' not in results:
-            results['repository'] = repo_url
+    Returns:
+        Dict containing analysis results
+    """
+    print(f"\n🔍 Analyzing Git repository: {repo_url}")
+    if commit_sha:
+        print(f"📋 Focusing on commit: {commit_sha}")
+    
+    # Get main repository analysis using the git integration module
+    results = git_module.analyze_repo(repo_url, capture_output=True)
+    
+    # If a specific commit is provided, do a diff analysis on it
+    if commit_sha:
+        print(f"\n📊 Analyzing commit diff for: {commit_sha}")
+        try:
+            diff_results = git_diff_module.analyze_git_diff(
+                repo_url=repo_url,
+                commit_sha=commit_sha,
+                capture_output=True
+            )
             
-        # Add timestamp if not present
-        if 'timestamp' not in results:
-            results['timestamp'] = datetime.now().isoformat()
-        
-        # Extract repository info for better display
-        repo_info = results.get('repository_info', {})
-        if repo_info:
-            # Create a better structured repository stats section
-            results['repository_stats'] = {
-                'total_commits': repo_info.get('commit_count', 'Unknown'),
-                'total_contributors': 'Not available',  # This would need additional API calls
-                'main_language': repo_info.get('primary_language', 'Unknown'),
-                'file_count': repo_info.get('file_count', 'Unknown')
-            }
-            
-            # Extract file types
-            if 'file_types' in repo_info and 'file_types' not in results:
-                results['file_types'] = repo_info['file_types']
+            # Merge the diff results with the main results
+            if diff_results:
+                results['diff_analysis'] = diff_results
                 
-            # Extract last commit info and build commit history
-            if 'last_commit' in repo_info and isinstance(repo_info['last_commit'], dict):
-                results['recent_commits'] = [repo_info['last_commit']]
+                # Extract key metrics for display
+                if 'diff_stats' in diff_results:
+                    print("\n=== Diff Analysis ===")
+                    stats = diff_results['diff_stats']
+                    print(f"Files changed: {stats.get('files_changed', 'Unknown')}")
+                    print(f"Additions: {stats.get('additions', 'Unknown')}")
+                    print(f"Deletions: {stats.get('deletions', 'Unknown')}")
                 
-                # If the last_commit has a sha, use it to extract more specific information
-                if 'hash' in repo_info['last_commit']:
-                    results['latest_commit_sha'] = repo_info['last_commit']['hash']
-    except Exception as e:
-        print(f"Error analyzing repository: {str(e)}")
-        results = {
-            'repository': repo_url,
-            'timestamp': datetime.now().isoformat(),
-            'error': str(e)
-        }
+                if 'requirements_changes' in diff_results:
+                    changes = diff_results['requirements_changes']
+                    if any(changes.values()):
+                        print("\n=== Requirements Changes ===")
+                        if changes.get('added'):
+                            print(f"Added: {', '.join(changes['added'])}")
+                        if changes.get('removed'):
+                            print(f"Removed: {', '.join(changes['removed'])}")
+                        if changes.get('changed'):
+                            print(f"Changed: {', '.join(changes['changed'])}")
+        except Exception as e:
+            print(f"Error in diff analysis: {str(e)}")
     
-    # Print a summary of the results
-    print(f"\nRepository: {repo_url}")
-    print(f"Analysis timestamp: {results.get('timestamp', datetime.now().isoformat())}")
-    
-    # Display repository statistics
-    repo_stats = results.get('repository_stats', {})
-    if repo_stats:
-        print("\nRepository statistics:")
-        print(f"  - Total commits: {repo_stats.get('total_commits', 'N/A')}")
-        print(f"  - Contributors: {repo_stats.get('total_contributors', 'N/A')}")
-        print(f"  - Main language: {repo_stats.get('main_language', 'N/A')}")
-    
-    # Show file type breakdown
-    file_types = results.get('file_types', {})
-    if file_types:
-        print("\nFile type breakdown:")
-        sorted_types = sorted(file_types.items(), key=lambda x: x[1], reverse=True)
-        for file_type, count in sorted_types[:5]:
-            print(f"  - {file_type}: {count} files")
-    
-    # Display commit history summary
-    commit_history = results.get('recent_commits', [])
-    if commit_history:
-        print("\nRecent commits:")
-        for i, commit in enumerate(commit_history[:3], 1):
-            author = commit.get('author', 'Unknown')
-            date = commit.get('date', 'Unknown date')
-            message = commit.get('message', 'No message')
-            print(f"  {i}. [{date}] {author}: {message[:50]}{'...' if len(message) > 50 else ''}")
-    
-    # Show AI analysis if available
-    if 'ai_analysis' in results:
-        print("\n=== AI-Generated Repository Analysis ===")
-        print(results.get('ai_analysis', 'No AI analysis available'))
-    
-    # Try to perform a Git diff analysis on the most recent commit
-    try:
-        # Get most recent commit if we have one
-        recent_commit = None
-        if 'latest_commit_sha' in results:
-            recent_commit = results['latest_commit_sha']
-        elif commit_history and len(commit_history) > 0:
-            recent_commit = commit_history[0].get('hash')
+    # Try to perform a Git diff analysis on the most recent commit if no specific commit was provided
+    if not commit_sha:
+        try:
+            # Get most recent commit if we have one
+            recent_commit = None
+            commit_history = results.get('commit_history', [])
             
-        # If we have a recent commit SHA, try to get the parent commit
-        if recent_commit:
-            print(f"\n=== Analyzing repository at commit {recent_commit[:7]} ===")
-            
-            # For diff analysis, we'd normally need a parent commit
-            # For now, we just analyze the single commit
-            try:
-                repo_info = {
-                    "repository": repo_url,
-                    "commit_sha": recent_commit,
-                    "files_changed": "N/A (single commit analysis)",
-                    "additions": "N/A (single commit analysis)",
-                    "deletions": "N/A (single commit analysis)"
-                }
+            if 'latest_commit_sha' in results:
+                recent_commit = results['latest_commit_sha']
+            elif commit_history and len(commit_history) > 0:
+                recent_commit = commit_history[0].get('hash')
                 
-                results['single_commit_analysis'] = repo_info
-                print(f"  - Repository: {repo_url}")
-                print(f"  - Commit: {recent_commit[:7]}")
-            except Exception as e:
-                print(f"Error analyzing commit: {str(e)}")
-    except Exception as e:
-        print(f"Error retrieving commit information: {str(e)}")
+            # If we have a recent commit SHA and at least two commits, try to analyze the diff
+            if recent_commit and len(commit_history) > 1:
+                print(f"\n=== Analyzing diff for most recent commit {recent_commit[:7]} ===")
+                
+                # Get the parent commit
+                parent_commit = commit_history[1].get('hash')
+                
+                if parent_commit:
+                    try:
+                        # Use the analyze_git_diff function to get proper diff analysis
+                        diff_results = git_diff_module.analyze_git_diff(
+                            repo_url=repo_url,
+                            commit_sha=parent_commit,
+                            target_commit=recent_commit,
+                            capture_output=True
+                        )
+                        
+                        if diff_results:
+                            results['diff_analysis'] = diff_results
+                            
+                            # Extract key metrics for display
+                            if 'diff_stats' in diff_results:
+                                print("\n=== Diff Analysis ===")
+                                stats = diff_results['diff_stats']
+                                print(f"Files changed: {stats.get('files_changed', 'Unknown')}")
+                                print(f"Additions: {stats.get('additions', 'Unknown')}")
+                                print(f"Deletions: {stats.get('deletions', 'Unknown')}")
+                    except Exception as e:
+                        print(f"Error analyzing commit diff: {str(e)}")
+                    
+            else:
+                # Fallback to single commit analysis
+                if recent_commit:
+                    print(f"\n=== Analyzing repository at commit {recent_commit[:7]} ===")
+                    
+                    repo_info = {
+                        "repository": repo_url,
+                        "commit_sha": recent_commit,
+                        "single_commit": True
+                    }
+                    
+                    results['single_commit_analysis'] = repo_info
+                    print(f"  - Repository: {repo_url}")
+                    print(f"  - Commit: {recent_commit[:7]}")
+        except Exception as e:
+            print(f"Error retrieving commit information: {str(e)}")
     
     # Generate HTML report
     report_path = generate_html_report(
@@ -652,6 +642,22 @@ def showcase_git(repo_url: str) -> Dict[str, Any]:
     print("   (You can view this URL in the Langflow interface)")
     
     return results
+
+def showcase_git(repo_url: str) -> Dict[str, Any]:
+    """Showcase Git repository analysis."""
+    if not repo_url:
+        print("Error: Repository URL is required for Git showcase.")
+        print("Usage: python showcase_mcp_features.py --feature git --repo-url https://github.com/username/repo")
+        return {"error": "Repository URL is required"}
+    
+    # Normalize the repository URL to ensure consistent format
+    repo_url = normalize_repo_url(repo_url)
+    
+    print(f"=== Showcasing Git Analysis for {repo_url} ===")
+    print("Please wait, cloning repository and analyzing data...")
+    
+    # Call the analyze_git_repo function to perform the analysis
+    return analyze_git_repo(repo_url)
 
 def wait_for_user_exit():
     """Keep the server running until the user presses Ctrl+C."""
@@ -686,11 +692,19 @@ def main():
     if args.feature == "filesystem":
         results = showcase_filesystem()
     elif args.feature == "git":
-        # If commit SHA is provided, add it to the repository URL
         repo_url = args.repo_url
+        if not repo_url:
+            parser.error("--repo-url is required for git feature")
+        
+        # Validate and normalize Git repository URL
+        repo_url = normalize_repo_url(repo_url)
+        
+        # Run the Git showcase with optional commit_sha
         if args.commit_sha:
             print(f"Analyzing specific commit: {args.commit_sha}")
-        results = showcase_git(repo_url)
+            results = analyze_git_repo(repo_url, args.commit_sha)
+        else:
+            results = showcase_git(repo_url)
     
     # Output as JSON if requested
     if args.json:

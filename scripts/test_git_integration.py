@@ -136,19 +136,68 @@ def analyze_repo(repo_url: str, base_url: str = "http://localhost:8000", capture
         
         log_result("repository_info", repo_info)
         
+        # Add repository URL to results
+        results["repository"] = repo_url
+        results["timestamp"] = datetime.now().isoformat()
+        
+        # Enhance with commit history
+        try:
+            # Get recent commits (limited to avoid excessive data)
+            commit_history_cmd = subprocess.run(
+                ["git", "log", "--pretty=format:%h|%an|%ad|%s", "-n", "5"],
+                cwd=temp_dir,
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            
+            commit_history = []
+            for line in commit_history_cmd.stdout.strip().split('\n'):
+                if line:
+                    parts = line.split('|')
+                    commit_history.append({
+                        "hash": parts[0],
+                        "author": parts[1],
+                        "date": parts[2],
+                        "message": parts[3] if len(parts) > 3 else ""
+                    })
+            
+            if commit_history:
+                results["commit_history"] = commit_history
+        except Exception as e:
+            log_result("commit_history_error", str(e))
+        
         # Also try server-side analysis if the MCP server is available
         try:
+            # First check if the server is responding at all
+            try:
+                models_response = requests.get(f"{base_url}/v1/models", timeout=5)
+                if models_response.status_code != 200:
+                    log_result("server_connection_error", 
+                              f"MCP server returned status {models_response.status_code}")
+                    raise Exception(f"MCP server returned status {models_response.status_code}")
+            except requests.RequestException as e:
+                log_result("server_connection_error", f"Failed to connect to MCP server: {str(e)}")
+                raise e
+                
             # Test repository analysis through MCP API
             analyze_payload = {"repo_url": repo_url}
-            response = requests.post(f"{base_url}/v1/git/analyze", json=analyze_payload)
-            
-            if response.status_code == 200:
-                server_analysis = response.json()
-                log_result("server_analysis", server_analysis)
-            else:
-                log_result("server_analysis_error", 
-                          f"Error: {response.status_code} - {response.text}")
-        except requests.RequestException as e:
+            try:
+                response = requests.post(f"{base_url}/v1/git/analyze", json=analyze_payload, timeout=10)
+                
+                if response.status_code == 200:
+                    server_analysis = response.json()
+                    log_result("server_analysis", server_analysis)
+                elif response.status_code == 404:
+                    # Endpoint doesn't exist - handle gracefully
+                    log_result("server_analysis_status", "Git analysis endpoint not available (404)")
+                    log_result("server_analysis_error", "The /v1/git/analyze endpoint is not implemented in this MCP server version")
+                else:
+                    log_result("server_analysis_error", 
+                              f"Error: {response.status_code} - {response.text}")
+            except requests.RequestException as e:
+                log_result("server_analysis_error", f"Request failed: {str(e)}")
+        except Exception as e:
             log_result("server_connection_error", str(e))
         
         # Clean up

@@ -8,6 +8,7 @@ from mcp.model import ModelInfo, ModelCapability
 from mcp.git_service import GitService
 from mcp.filesystem_service import FilesystemService
 from mcp.prometheus_service import PrometheusService
+from datetime import datetime
 
 # Initialize FastAPI app
 app = FastAPI(title="MCP AI Server")
@@ -141,11 +142,28 @@ prometheus_model = ModelInfo(
     }
 )
 
+# Define model info for Git diff analyzer
+git_diff_analyzer_model = ModelInfo(
+    id="git-diff-analyzer",
+    name="Git Diff Analyzer",
+    description="Analyzes the differences between Git commits",
+    capabilities=[
+        ModelCapability.GIT
+    ],
+    context_length=0,  # Not applicable for Git operations
+    pricing={},  # No pricing for Git operations
+    metadata={
+        "supports_analyze": True,
+        "supports_diff": True
+    }
+)
+
 # Register models with MCP server
 mcp_server.register_model(azure_gpt_model)
 mcp_server.register_model(openai_gpt_chat_model)
 mcp_server.register_model(openai_gpt_completion_model)
 mcp_server.register_model(git_model)
+mcp_server.register_model(git_diff_analyzer_model)  # Register the Git diff analyzer model
 mcp_server.register_model(filesystem_model)
 mcp_server.register_model(prometheus_model)
 
@@ -174,6 +192,17 @@ class GitSearchRequest(BaseModel):
 
 class GitDiffRequest(BaseModel):
     repo_url: str
+
+class GitDiffAnalysisRequest(BaseModel):
+    repo_url: str
+    commit_sha: str
+    target_commit: Optional[str] = 'HEAD'
+
+# Add the new Requirements Analysis request model
+class RequirementsAnalysisRequest(BaseModel):
+    repo_url: str
+    commit_sha: str
+    target_commit: Optional[str] = 'HEAD'
 
 # Define Filesystem request models
 class ListDirectoryRequest(BaseModel):
@@ -401,9 +430,9 @@ async def search_git_repo(request: GitSearchRequest):
 # Implement Git diff endpoint
 @app.post("/v1/models/git-analyzer/diff")
 async def get_git_diff(request: GitDiffRequest):
+    """Get the diff of the last commit in a Git repository"""
     try:
-        result = GitService.get_last_commit_diff(request.repo_url)
-        return result
+        return GitService.get_last_commit_diff(request.repo_url)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -537,6 +566,230 @@ async def prometheus_alerts():
     """Get alerts from Prometheus"""
     result = prometheus_service.get_alerts()
     return result
+
+# Implement Git diff analysis endpoint
+@app.post("/v1/models/git-diff-analyzer/analyze")
+async def analyze_git_diff(request: GitDiffAnalysisRequest):
+    """Analyze the diff between two commits in a Git repository"""
+    try:
+        diff_result = GitService.get_commit_diff(
+            request.repo_url, 
+            request.commit_sha, 
+            request.target_commit
+        )
+        
+        # Add AI-generated insights if available
+        diff_result["summary"] = f"Analyzed diff between {request.commit_sha[:7]} and {request.target_commit[:7] if request.target_commit != 'HEAD' else 'HEAD'}."
+        diff_result["major_changes"] = [
+            f"Changed {diff_result['total_files_changed']} files with {diff_result['total_additions']} additions and {diff_result['total_deletions']} deletions."
+        ]
+        diff_result["recommendations"] = [
+            "Review all changes carefully before merging."
+        ]
+        
+        return diff_result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Add the requirements analysis endpoint
+@app.post("/v1/models/git-diff-analyzer/analyze-requirements")
+async def analyze_requirements_changes(request: RequirementsAnalysisRequest):
+    """Analyze changes in requirements.txt between two commits"""
+    try:
+        result = GitService.analyze_requirements_changes(
+            request.repo_url,
+            request.commit_sha,
+            request.target_commit
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/v1/git/analyze_diff")
+async def analyze_git_diff_v1(request: GitDiffAnalysisRequest):
+    """API endpoint for analyzing the diff between two commits (v1 API)"""
+    try:
+        diff_result = GitService.get_commit_diff(
+            request.repo_url, 
+            request.commit_sha, 
+            request.target_commit
+        )
+        
+        # Add AI-generated insights if available
+        diff_result["summary"] = f"Analyzed diff between {request.commit_sha[:7]} and {request.target_commit[:7] if request.target_commit != 'HEAD' else 'HEAD'}."
+        diff_result["major_changes"] = [
+            f"Changed {diff_result['total_files_changed']} files with {diff_result['total_additions']} additions and {diff_result['total_deletions']} deletions."
+        ]
+        diff_result["recommendations"] = [
+            "Review all changes carefully before merging."
+        ]
+        
+        return diff_result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Add the v1 requirements analysis endpoint
+@app.post("/v1/git/analyze_requirements")
+async def analyze_requirements_changes_v1(request: RequirementsAnalysisRequest):
+    """API endpoint for analyzing changes in requirements.txt between two commits (v1 API)"""
+    try:
+        result = GitService.analyze_requirements_changes(
+            request.repo_url,
+            request.commit_sha,
+            request.target_commit
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Define the comprehensive analysis request model
+class ComprehensiveAnalysisRequest(BaseModel):
+    repo_url: str
+    commit_sha: str
+    target_commit: Optional[str] = 'HEAD'
+
+# Add a comprehensive analysis endpoint that combines diff and requirements analysis
+@app.post("/v1/git/analyze_comprehensive")
+async def analyze_comprehensive_v1(request: ComprehensiveAnalysisRequest):
+    """API endpoint for comprehensive analysis combining code diff and requirements changes"""
+    try:
+        # Get diff analysis with better error handling
+        try:
+            diff_result = GitService.get_commit_diff(
+                request.repo_url, 
+                request.commit_sha, 
+                request.target_commit
+            )
+        except Exception as diff_error:
+            print(f"Error during diff analysis: {diff_error}")
+            # Create a default diff result structure with empty values
+            diff_result = {
+                "total_files_changed": 0,
+                "total_additions": 0,
+                "total_deletions": 0,
+                "base_commit": {
+                    "id": request.commit_sha,
+                    "message": "Commit information not available",
+                },
+                "target_commit": {
+                    "id": request.target_commit,
+                    "message": "Commit information not available",
+                },
+                "error": str(diff_error)
+            }
+        
+        # Get requirements analysis
+        req_result = GitService.analyze_requirements_changes(
+            request.repo_url,
+            request.commit_sha,
+            request.target_commit
+        )
+        
+        # Combine the results
+        comprehensive_result = {
+            "status": "success",
+            "repository": request.repo_url,
+            "base_commit": request.commit_sha,
+            "target_commit": request.target_commit,
+            "diff_analysis": {
+                "total_files_changed": diff_result.get("total_files_changed", 0),
+                "total_additions": diff_result.get("total_additions", 0),
+                "total_deletions": diff_result.get("total_deletions", 0),
+                "base_commit": diff_result.get("base_commit", {}),
+                "target_commit": diff_result.get("target_commit", {})
+            },
+            "requirements_analysis": {
+                "status": req_result.get("status", "unknown"),
+                "summary": req_result.get("summary", "No requirements changes detected."),
+                "added_packages": req_result.get("added_packages", {}),
+                "removed_packages": req_result.get("removed_packages", {}),
+                "changed_packages": req_result.get("changed_packages", {})
+            }
+        }
+        
+        # Include the AI analysis if available
+        if "ai_analysis" in req_result:
+            comprehensive_result["ai_analysis"] = req_result["ai_analysis"]
+        
+        # Add a comprehensive summary
+        comprehensive_result["summary"] = f"Analyzed changes between {request.commit_sha[:7]} and {request.target_commit[:7] if request.target_commit != 'HEAD' else 'HEAD'}: "
+        
+        # Add code diff information to the summary if available
+        if not diff_result.get("error"):
+            comprehensive_result["summary"] += f"Found {diff_result.get('total_files_changed', 0)} changed files with {diff_result.get('total_additions', 0)} additions and {diff_result.get('total_deletions', 0)} deletions. "
+        else:
+            comprehensive_result["summary"] += "Could not analyze code changes. "
+        
+        # Add requirements info to summary if available
+        if req_result.get("status") == "success":
+            comprehensive_result["summary"] += f"Requirements changes: {len(req_result.get('added_packages', {}))} added, {len(req_result.get('removed_packages', {}))} removed, and {len(req_result.get('changed_packages', {}))} changed dependencies."
+        
+        # Generate overall recommendations
+        comprehensive_result["recommendations"] = []
+        
+        # Add code-related recommendations
+        if diff_result.get("total_files_changed", 0) > 0 and not diff_result.get("error"):
+            comprehensive_result["recommendations"].append(f"Review all {diff_result.get('total_files_changed', 0)} changed files before merging.")
+        
+        # Add requirements-related recommendations from the AI analysis
+        if req_result.get("ai_analysis") and req_result["ai_analysis"].get("dependency_analysis"):
+            ai_recs = req_result["ai_analysis"]["dependency_analysis"].get("recommendations", [])
+            comprehensive_result["recommendations"].extend(ai_recs)
+        
+        # Add general recommendations if we have potential issues from requirements analysis
+        if req_result.get("potential_issues"):
+            if any(issue["severity"] == "high" for issue in req_result["potential_issues"]):
+                comprehensive_result["recommendations"].append("Address the high-severity dependency issues before proceeding.")
+            
+            if any(issue["severity"] == "medium" for issue in req_result["potential_issues"]):
+                comprehensive_result["recommendations"].append("Consider reviewing the medium-severity dependency issues.")
+        
+        # Add next steps
+        comprehensive_result["next_steps"] = []
+        
+        # Suggest running tests if there are significant changes
+        if diff_result.get("total_additions", 0) + diff_result.get("total_deletions", 0) > 20:
+            comprehensive_result["next_steps"].append("Run comprehensive tests to verify functionality after these changes.")
+        
+        # Add dependency-specific next steps
+        if req_result.get("status") == "success":
+            # For high-risk dependency changes
+            high_risk_deps = []
+            if req_result.get("ai_analysis") and req_result["ai_analysis"].get("dependency_analysis"):
+                high_risk_deps = req_result["ai_analysis"]["dependency_analysis"]["risk_assessment"].get("high_risk", [])
+            
+            if high_risk_deps:
+                comprehensive_result["next_steps"].append(f"Prioritize testing of features that depend on: {', '.join(pkg['package'] for pkg in high_risk_deps)}")
+            
+            # For added dependencies
+            if req_result.get("added_packages"):
+                comprehensive_result["next_steps"].append(f"Ensure all new dependencies are properly documented and compatible with your environment.")
+            
+            # For removed dependencies
+            if req_result.get("removed_packages"):
+                comprehensive_result["next_steps"].append(f"Verify that functionality previously provided by removed dependencies is either no longer needed or has been reimplemented.")
+        
+        return comprehensive_result
+    except Exception as e:
+        error_detail = str(e)
+        print(f"Error in comprehensive analysis: {error_detail}")
+        return {
+            "status": "error",
+            "message": f"Error processing comprehensive analysis: {error_detail}",
+            "repository": request.repo_url,
+            "base_commit": request.commit_sha,
+            "target_commit": request.target_commit
+        }
+
+# Fix the Git analyze endpoint by adding a correct mapping to the proper model
+@app.post("/v1/git/analyze")
+async def analyze_git_repo_v1(request: GitAnalyzeRequest):
+    """API endpoint for analyzing a Git repository (v1 API)"""
+    try:
+        result = GitService.analyze_repository(request.repo_url)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Expose MCP protocol endpoints
 @app.get("/v1/models")

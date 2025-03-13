@@ -80,39 +80,62 @@ def analyze_git_diff(repo_url: str, commit_sha: str,
         
         log_result("diff_stats", diff_stats)
         
-        # Check for requirements.txt changes
+        # Check for requirements.txt changes with enhanced analysis
         try:
-            old_requirements = get_file_from_commit(repo_url, commit_sha, "requirements.txt")
-            new_requirements = get_file_from_commit(repo_url, target_commit, "requirements.txt")
-            
-            if old_requirements is not None and new_requirements is not None:
-                added, removed, changed = compare_requirements(new_requirements, old_requirements)
+            # Try to get a more detailed requirements analysis using MCPAIComponent
+            try:
+                mcp = MCPAIComponent(mcp_server_url="http://localhost:8000")
                 
-                req_changes = {
-                    "added": added,
-                    "removed": removed,
-                    "changed": changed,
-                }
+                # First check if the enhanced requirements analysis is available
+                req_analysis = mcp.analyze_requirements(repo_url, commit_sha, target_commit)
                 
-                log_result("requirements_changes", req_changes)
+                if req_analysis and isinstance(req_analysis, dict) and 'status' in req_analysis and req_analysis['status'] != 'error':
+                    log_result("requirements_analysis", req_analysis)
+                    
+                    # Log detailed information about potential issues and recommendations
+                    if 'potential_issues' in req_analysis and req_analysis['potential_issues']:
+                        log_result("potential_dependency_issues", req_analysis['potential_issues'])
+                    
+                    if 'recommendations' in req_analysis and req_analysis['recommendations']:
+                        log_result("dependency_recommendations", req_analysis['recommendations'])
+                    
+                else:
+                    # Fall back to basic requirements comparison if enhanced analysis failed
+                    old_requirements = get_file_from_commit(repo_url, commit_sha, "requirements.txt")
+                    new_requirements = get_file_from_commit(repo_url, target_commit, "requirements.txt")
+                    
+                    if old_requirements is not None and new_requirements is not None:
+                        added, removed, changed = compare_requirements(new_requirements, old_requirements)
+                        
+                        req_changes = {
+                            "added": added,
+                            "removed": removed,
+                            "changed": changed,
+                        }
+                        
+                        log_result("requirements_changes", req_changes)
+                    
+            except Exception as e:
+                log_result("requirements_analysis_error", str(e))
+                
+                # Fallback to basic requirements comparison
+                old_requirements = get_file_from_commit(repo_url, commit_sha, "requirements.txt")
+                new_requirements = get_file_from_commit(repo_url, target_commit, "requirements.txt")
+                
+                if old_requirements is not None and new_requirements is not None:
+                    added, removed, changed = compare_requirements(new_requirements, old_requirements)
+                    
+                    req_changes = {
+                        "added": added,
+                        "removed": removed,
+                        "changed": changed,
+                    }
+                    
+                    log_result("requirements_changes", req_changes)
         except Exception as e:
             log_result("requirements_analysis_error", str(e))
         
         # Try to get a more detailed diff analysis using MCPAIComponent
-        try:
-            mcp = MCPAIComponent(mcp_server_url="http://localhost:8000")
-            
-            # Check if the analyze_diff endpoint exists
-            models = mcp.list_models()
-            has_diff_analyzer = any(model.get('id') == 'git-diff-analyzer' for model in models)
-            
-            if has_diff_analyzer:
-                api_result = mcp.analyze_diff(repo_url, commit_sha, target_commit)
-                
-                if api_result and isinstance(api_result, dict) and 'status' in api_result:
-                    log_result("api_analysis", api_result)
-        except Exception as e:
-            log_result("api_analysis_error", str(e))
     
     except Exception as e:
         log_result("error", str(e))
@@ -449,78 +472,101 @@ def test_git_diff(repo_url=None, compare_commit=None):
             print(f"Deletions: {deletions}")
             print(f"Total diff lines: {len(diff_lines)}")
             
-            # Check for requirements.txt changes
-            print("\nChecking for requirements.txt changes...")
-            old_requirements = get_file_from_commit(repo_url, compare_commit, "requirements.txt")
+            # Check for requirements.txt changes with enhanced analysis
+            print("\nAnalyzing requirements.txt changes...")
             
-            if old_requirements is not None:
-                print("Found requirements.txt in the base commit.")
-                
-                # Get current requirements.txt
-                new_requirements = get_file_from_commit(repo_url, "HEAD", "requirements.txt")
-                
-                if new_requirements is not None:
-                    print("Found requirements.txt in the current commit.")
-                    
-                    # Compare requirements
-                    added, removed, changed = compare_requirements(new_requirements, old_requirements)
-                    
-                    if added or removed or changed:
-                        print("\nRequirements Changes:")
-                        
-                        if added:
-                            print("\nAdded Dependencies:")
-                            for dep in added:
-                                print(f"  + {dep}")
-                        
-                        if removed:
-                            print("\nRemoved Dependencies:")
-                            for dep in removed:
-                                print(f"  - {dep}")
-                        
-                        if changed:
-                            print("\nChanged Dependencies:")
-                            for dep in changed:
-                                print(f"  ~ {dep}")
-                    else:
-                        print("No changes to requirements.txt dependencies.")
-                else:
-                    print("requirements.txt not found in the current commit.")
-            else:
-                print("requirements.txt not found in the base commit.")
-            
-            # Try to send the diff to the MCP server for AI analysis
             try:
-                print("\nSending diff to MCP server for AI analysis...")
+                # Try to get a more detailed requirements analysis
                 mcp = MCPAIComponent(mcp_server_url="http://localhost:8000")
                 
-                # Check if the analyze_diff endpoint exists
-                models = mcp.list_models()
-                has_diff_analyzer = any(model.get('id') == 'git-diff-analyzer' for model in models)
+                req_analysis = mcp.analyze_requirements(repo_url, compare_commit)
                 
-                if has_diff_analyzer:
-                    print("Found git-diff-analyzer model, sending request...")
-                    result = mcp.analyze_diff(repo_url, compare_commit)
+                if req_analysis and isinstance(req_analysis, dict) and req_analysis.get('status') != 'error':
+                    print("\nEnhanced Requirements Analysis:")
                     
-                    if result and isinstance(result, dict) and 'summary' in result:
-                        print("\nAI Analysis Summary:")
-                        print(result['summary'])
+                    # Print summary
+                    if 'summary' in req_analysis:
+                        print(f"\nSummary: {req_analysis['summary']}")
+                    
+                    # Print added packages
+                    if 'added_packages' in req_analysis and req_analysis['added_packages']:
+                        print("\nAdded Dependencies:")
+                        for pkg_name, ver_spec in req_analysis['added_packages'].items():
+                            print(f"  + {pkg_name}{ver_spec}")
+                    
+                    # Print removed packages
+                    if 'removed_packages' in req_analysis and req_analysis['removed_packages']:
+                        print("\nRemoved Dependencies:")
+                        for pkg_name, ver_spec in req_analysis['removed_packages'].items():
+                            print(f"  - {pkg_name}{ver_spec}")
+                    
+                    # Print changed packages
+                    if 'changed_packages' in req_analysis and req_analysis['changed_packages']:
+                        print("\nChanged Dependencies:")
+                        for pkg_name, change in req_analysis['changed_packages'].items():
+                            print(f"  ~ {pkg_name}: {change['old']} -> {change['new']}")
+                    
+                    # Print AI Analysis if available
+                    if 'ai_analysis' in req_analysis:
+                        ai_analysis = req_analysis['ai_analysis']
+                        print("\nAI-Powered Dependency Analysis:")
                         
-                        if 'major_changes' in result:
-                            print("\nMajor Changes:")
-                            for change in result['major_changes']:
-                                print(f"  - {change}")
+                        # Print risk assessment
+                        print("\nRisk Assessment:")
+                        for risk_level in ['high_risk', 'medium_risk', 'low_risk']:
+                            if ai_analysis['dependency_analysis']['risk_assessment'][risk_level]:
+                                print(f"\n{risk_level.replace('_', ' ').title()}:")
+                                for pkg in ai_analysis['dependency_analysis']['risk_assessment'][risk_level]:
+                                    print(f"  • {pkg['package']}: {pkg['analysis']}")
+                                    if pkg.get('recommendations'):
+                                        for rec in pkg['recommendations']:
+                                            print(f"    - {rec}")
                         
-                        if 'recommendations' in result:
-                            print("\nRecommendations:")
-                            for rec in result['recommendations']:
-                                print(f"  - {rec}")
-                    else:
-                        print("No summary provided in the AI analysis result.")
+                        # Print overall recommendations
+                        if ai_analysis['dependency_analysis']['recommendations']:
+                            print("\nOverall Recommendations:")
+                            for rec in ai_analysis['dependency_analysis']['recommendations']:
+                                print(f"  • {rec}")
                 else:
-                    print("git-diff-analyzer model not found on MCP server.")
+                    # Fallback to basic requirements comparison
+                    print("Enhanced requirements analysis not available. Using basic comparison...")
+                    check_requirements_basic(repo_url, compare_commit)
             except Exception as e:
-                print(f"Error during AI analysis: {e}")
+                print(f"Error during requirements analysis: {e}")
+                # Fallback to basic requirements comparison
+                print("Using basic requirements.txt comparison...")
+                check_requirements_basic(repo_url, compare_commit)
+            
+            # Try to send the diff to the MCP server for AI analysis
+                
+            # Get comprehensive analysis with next steps
+            try:
+                print("\nPerforming comprehensive analysis with next steps...")
+                comprehensive_results = mcp.analyze_comprehensive(repo_url, compare_commit)
+                
+                if comprehensive_results and isinstance(comprehensive_results, dict):
+                    print("\nComprehensive Analysis:")
+                    
+                    # Print summary
+                    if 'summary' in comprehensive_results:
+                        print(f"\nSummary: {comprehensive_results['summary']}")
+                    
+                    # Print recommendations
+                    if 'recommendations' in comprehensive_results:
+                        print("\nRecommendations:")
+                        for rec in comprehensive_results['recommendations']:
+                            print(f"  • {rec}")
+                    
+                    # Print next steps
+                    if 'next_steps' in comprehensive_results:
+                        print("\nNext Steps:")
+                        for step in comprehensive_results['next_steps']:
+                            print(f"  → {step}")
+                else:
+                    print("Comprehensive analysis not available or returned empty results.")
+            except Exception as e:
+                print(f"Error during comprehensive analysis: {e}")
+                
         else:
             print(f"Error: Commit SHA {compare_commit} is invalid.")
     else:
@@ -562,10 +608,52 @@ def test_git_diff(repo_url=None, compare_commit=None):
         except Exception as e:
             print(f"Error getting latest commit info: {e}")
 
+def check_requirements_basic(repo_url, compare_commit, target_commit='HEAD'):
+    """Basic requirements.txt analysis using the legacy compare_requirements function"""
+    print("\nChecking for requirements.txt changes...")
+    old_requirements = get_file_from_commit(repo_url, compare_commit, "requirements.txt")
+    
+    if old_requirements is not None:
+        print("Found requirements.txt in the base commit.")
+        
+        # Get current requirements.txt
+        new_requirements = get_file_from_commit(repo_url, target_commit, "requirements.txt")
+        
+        if new_requirements is not None:
+            print("Found requirements.txt in the current commit.")
+            
+            # Compare requirements
+            added, removed, changed = compare_requirements(new_requirements, old_requirements)
+            
+            if added or removed or changed:
+                print("\nRequirements Changes:")
+                
+                if added:
+                    print("\nAdded Dependencies:")
+                    for dep in added:
+                        print(f"  + {dep}")
+                
+                if removed:
+                    print("\nRemoved Dependencies:")
+                    for dep in removed:
+                        print(f"  - {dep}")
+                
+                if changed:
+                    print("\nChanged Dependencies:")
+                    for dep in changed:
+                        print(f"  ~ {dep}")
+            else:
+                print("No changes to requirements.txt dependencies.")
+        else:
+            print("requirements.txt not found in the current commit.")
+    else:
+        print("requirements.txt not found in the base commit.")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test Git diff functionality between commits")
     parser.add_argument("repo_url", nargs="?", help="URL of the Git repository")
     parser.add_argument("commit_sha", nargs="?", help="Base commit SHA to compare against")
+    parser.add_argument("--comprehensive", action="store_true", help="Get comprehensive analysis with next steps")
     
     args = parser.parse_args()
     

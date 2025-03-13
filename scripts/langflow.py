@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+from datetime import datetime
 
 # Add the parent directory to Python path for proper imports
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -90,12 +91,35 @@ class MCPAIComponent:
             "repo_url": repo_url
         }
         
-        response = requests.post(
-            f"{self.mcp_server_url}/v1/models/git-analyzer/analyze",
-            json=payload
-        )
-        response.raise_for_status()
-        return response.json()
+        try:
+            # Try the v1 API endpoint first (correct path)
+            response = requests.post(
+                f"{self.mcp_server_url}/v1/git/analyze",
+                json=payload,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                # Fallback to the git-analyzer model endpoint 
+                try:
+                    fallback_response = requests.post(
+                        f"{self.mcp_server_url}/v1/models/git-analyzer/analyze",
+                        json=payload,
+                        timeout=30
+                    )
+                    fallback_response.raise_for_status()
+                    return fallback_response.json()
+                except:
+                    # If both endpoints fail, return a structured error
+                    return {
+                        "status": "error",
+                        "message": "Git analysis endpoint not available. Server may not support this feature.",
+                        "timestamp": datetime.now().isoformat()
+                    }
+            # For other HTTP errors, re-raise
+            raise
     
     def search_git_repo(self, repo_url: str, pattern: str) -> Dict[str, Any]:
         """Search a Git repository for files matching a pattern
@@ -483,6 +507,162 @@ class MCPAIComponent:
         )
         response.raise_for_status()
         return response.json()
+    
+    def analyze_diff(self, repo_url: str, commit_sha: str, target_commit: str = 'HEAD') -> Dict[str, Any]:
+        """Analyze the diff between two commits in a Git repository
+        
+        Args:
+            repo_url: URL of the Git repository to analyze
+            commit_sha: Base commit SHA to compare from
+            target_commit: Target commit to compare to (default: HEAD)
+            
+        Returns:
+            Dict[str, Any]: Diff analysis results
+        """
+        payload = {
+            "repo_url": repo_url,
+            "commit_sha": commit_sha,
+            "target_commit": target_commit
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.mcp_server_url}/v1/git/analyze_diff",
+                json=payload,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                # Fallback to the git-analyzer endpoint if the dedicated endpoint doesn't exist
+                try:
+                    fallback_response = requests.post(
+                        f"{self.mcp_server_url}/v1/models/git-diff-analyzer/analyze",
+                        json=payload,
+                        timeout=30
+                    )
+                    fallback_response.raise_for_status()
+                    return fallback_response.json()
+                except:
+                    # If both endpoints fail, return a structured error
+                    return {
+                        "status": "error",
+                        "message": "Git diff analysis endpoint not available. Server may not support this feature.",
+                        "timestamp": datetime.now().isoformat()
+                    }
+            # For other HTTP errors, re-raise
+            raise
+    
+    def analyze_requirements(self, repo_url: str, commit_sha: str, target_commit: str = 'HEAD') -> Dict[str, Any]:
+        """Analyze changes in requirements.txt between two commits with detailed compatibility analysis
+        
+        Args:
+            repo_url: URL of the Git repository to analyze
+            commit_sha: Base commit SHA to compare from
+            target_commit: Target commit to compare to (default: HEAD)
+            
+        Returns:
+            Dict[str, Any]: Detailed analysis of requirements.txt changes
+        """
+        payload = {
+            "repo_url": repo_url,
+            "commit_sha": commit_sha,
+            "target_commit": target_commit
+        }
+        
+        try:
+            # Try the v1 API endpoint first
+            response = requests.post(
+                f"{self.mcp_server_url}/v1/git/analyze_requirements",
+                json=payload,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                # Fallback to the git-diff-analyzer endpoint if the dedicated endpoint doesn't exist
+                try:
+                    fallback_response = requests.post(
+                        f"{self.mcp_server_url}/v1/models/git-diff-analyzer/analyze-requirements",
+                        json=payload,
+                        timeout=30
+                    )
+                    fallback_response.raise_for_status()
+                    return fallback_response.json()
+                except:
+                    # If both endpoints fail, return a structured error
+                    return {
+                        "status": "error",
+                        "message": "Requirements analysis endpoint not available. Server may not support this feature.",
+                        "timestamp": datetime.now().isoformat()
+                    }
+            # For other HTTP errors, re-raise
+            raise
+    
+    def analyze_comprehensive(self, repo_url: str, commit_sha: str, target_commit: str = 'HEAD') -> Dict[str, Any]:
+        """Perform a comprehensive analysis of changes between commits, including code diff and requirements.txt analysis
+        
+        Args:
+            repo_url: URL of the Git repository to analyze
+            commit_sha: Base commit SHA to compare from
+            target_commit: Target commit to compare to (default: HEAD)
+            
+        Returns:
+            Dict[str, Any]: Comprehensive analysis of changes with next steps and recommendations
+        """
+        payload = {
+            "repo_url": repo_url,
+            "commit_sha": commit_sha,
+            "target_commit": target_commit
+        }
+        
+        try:
+            response = requests.post(
+                f"{self.mcp_server_url}/v1/git/analyze_comprehensive",
+                json=payload,
+                timeout=60  # Longer timeout as this combines multiple analyses
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.HTTPError as e:
+            # If the endpoint doesn't exist, try to build the comprehensive analysis manually
+            if e.response.status_code == 404:
+                try:
+                    # Get diff analysis
+                    diff_result = self.analyze_diff(repo_url, commit_sha, target_commit)
+                    
+                    # Get requirements analysis
+                    req_result = self.analyze_requirements(repo_url, commit_sha, target_commit)
+                    
+                    # Combine the results manually (simplified version)
+                    return {
+                        "status": "success",
+                        "repository": repo_url,
+                        "base_commit": commit_sha,
+                        "target_commit": target_commit,
+                        "summary": f"Comprehensive analysis (client-side fallback) between {commit_sha[:7]} and {target_commit}",
+                        "diff_analysis": diff_result,
+                        "requirements_analysis": req_result,
+                        "recommendations": [
+                            "Review all changes carefully before merging.",
+                            "Run comprehensive tests to verify functionality."
+                        ],
+                        "next_steps": [
+                            "Review the detailed diff analysis for code changes.",
+                            "Review the requirements analysis for dependency changes.",
+                            "Run comprehensive tests focusing on changed components."
+                        ]
+                    }
+                except Exception as inner_e:
+                    return {
+                        "status": "error",
+                        "message": f"Failed to create comprehensive analysis: {str(inner_e)}",
+                        "timestamp": datetime.now().isoformat()
+                    }
+            # For other HTTP errors, re-raise
+            raise
     
     def process(self, 
                 input_type: str = "chat",  # "chat" or "completion"
