@@ -10,8 +10,19 @@ cd "$SCRIPT_PATH"
 export MCP_ROOT="$SCRIPT_PATH"
 export PYTHONPATH="$MCP_ROOT:$PYTHONPATH"
 
-# Ensure the runner script exists
+# Save the location of the runner script before any environment changes
 RUNNER_SCRIPT="$SCRIPT_PATH/scripts/mcp_runner.sh"
+
+# Check if a virtual environment exists and activate it if it does
+if [ -d "$SCRIPT_PATH/.venv" ]; then
+  echo "Activating virtual environment..."
+  source "$SCRIPT_PATH/.venv/bin/activate" || {
+    echo "Warning: Could not activate virtual environment at $SCRIPT_PATH/.venv"
+    echo "Proceeding with system Python"
+  }
+fi
+
+# Ensure the runner script exists
 if [ ! -f "$RUNNER_SCRIPT" ]; then
     echo "Error: Could not find the MCP runner script at $RUNNER_SCRIPT"
     echo "Please make sure you have a complete MCP installation."
@@ -24,6 +35,52 @@ if [ "$1" == "ai-analyze" ]; then
     shift
     "$RUNNER_SCRIPT" "ai_analyze" "$@"
     exit $?
+fi
+
+# Special handling for langflow-component command
+if [ "$1" == "langflow-component" ]; then
+    # Remove the first argument and pass the rest to the langflow component generator
+    shift
+    "$RUNNER_SCRIPT" "generate_langflow_component" "$@"
+    exit $?
+fi
+
+# Special handling for langflow commands
+if [ "$1" == "langflow" ]; then
+    # Check for subcommands
+    if [ "$2" == "start" ]; then
+        shift 2
+        "$RUNNER_SCRIPT" "start_langflow" "$@"
+        exit $?
+    elif [ "$2" == "stop" ]; then
+        shift 2
+        "$RUNNER_SCRIPT" "stop_langflow" "$@"
+        exit $?
+    elif [ "$2" == "status" ]; then
+        shift 2
+        "$RUNNER_SCRIPT" "check_langflow" "$@"
+        exit $?
+    elif [ "$2" == "install-component" ]; then
+        shift 2
+        "$RUNNER_SCRIPT" "install_mcp_component" "$@"
+        exit $?
+    elif [ "$2" == "test-component" ]; then
+        shift 2
+        "$RUNNER_SCRIPT" "test_mcp_component" "$@"
+        exit $?
+    elif [ "$2" == "help" ] || [ -z "$2" ]; then
+        echo "MCP Langflow Commands:"
+        echo "  start             - Start the Langflow server"
+        echo "  stop              - Stop the Langflow server"
+        echo "  status            - Check Langflow server status"
+        echo "  install-component - Install the MCP component in Langflow"
+        echo "  test-component    - Test the MCP component with a chat request"
+        exit 0
+    else
+        echo "Unknown Langflow command: $2"
+        echo "Use 'langflow help' to see available commands"
+        exit 1
+    fi
 fi
 
 # Run the actual runner script, passing all arguments through

@@ -1,4 +1,6 @@
 import os
+import logging
+import sys
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel
 import openai
@@ -9,6 +11,39 @@ from mcp.git_service import GitService
 from mcp.filesystem_service import FilesystemService
 from mcp.prometheus_service import PrometheusService
 from datetime import datetime
+
+# Configure API logging
+def configure_api_logging():
+    log_mode = os.getenv("MCP_API_LOGGING", "console")
+    log_file = os.getenv("MCP_API_LOG_FILE")
+    
+    if log_mode.lower() == "file" and log_file:
+        # Set up logging to a file
+        logging.getLogger("uvicorn.access").handlers = []
+        logging.getLogger("uvicorn.error").handlers = []
+        
+        handler = logging.FileHandler(log_file)
+        handler.setFormatter(logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        ))
+        
+        # Configure access logger
+        access_logger = logging.getLogger("uvicorn.access")
+        access_logger.setLevel(logging.INFO)
+        access_logger.addHandler(handler)
+        
+        # Configure error logger
+        error_logger = logging.getLogger("uvicorn.error")
+        error_logger.setLevel(logging.ERROR)
+        error_logger.addHandler(handler)
+        
+        print(f"API logs redirected to: {log_file}")
+    else:
+        # Default console logging
+        pass
+
+# Configure API logging based on environment variables
+configure_api_logging()
 
 # Initialize FastAPI app
 app = FastAPI(title="MCP AI Server")
@@ -793,15 +828,19 @@ async def analyze_git_repo_v1(request: GitAnalyzeRequest):
 
 # Expose MCP protocol endpoints
 @app.get("/v1/models")
-async def list_models():
-    return {"models": [model.dict() for model in mcp_server.list_models()]}
+async def list_models() -> Any:
+    """List all available models"""
+    # Return list of models in the expected format
+    return {"models": [model.model_dump() for model in mcp_server.list_models()]}
 
 @app.get("/v1/models/{model_id}")
-async def get_model_info(model_id: str):
+async def get_model(model_id: str) -> Any:
+    """Get information about a specific model"""
     model = mcp_server.get_model(model_id)
-    if not model:
-        raise HTTPException(status_code=404, detail=f"Model {model_id} not found")
-    return model.dict()
+    if model:
+        return model.model_dump()
+    else:
+        raise HTTPException(status_code=404, detail=f"Model '{model_id}' not found")
 
 # Run the server
 if __name__ == "__main__":

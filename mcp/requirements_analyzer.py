@@ -3,7 +3,7 @@ import re
 import subprocess
 import tempfile
 from typing import Dict, List, Any, Optional, Tuple, Set
-import pkg_resources
+import importlib.metadata
 
 class RequirementsAnalyzer:
     """Class for analyzing changes in requirements.txt files between git commits"""
@@ -121,7 +121,7 @@ class RequirementsAnalyzer:
         for pattern in patterns:
             try:
                 output = subprocess.check_output(
-                    f"find {directory} -name '{pattern}' -not -path '*/\.*'",
+                    f"find {directory} -name '{pattern}' -not -path '*/\\.*'",
                     shell=True,
                     text=True
                 )
@@ -183,17 +183,21 @@ class RequirementsAnalyzer:
         for pkg_name in requirements_dict:
             dependencies = set()
             
-            # Try to get dependencies using pkg_resources
+            # Try to get dependencies using importlib.metadata instead of pkg_resources
             try:
                 # Normalize package name (remove version and extras)
                 base_pkg_name = pkg_name.split('[')[0]
                 
                 # Check if package is installed
                 try:
-                    dist = pkg_resources.get_distribution(base_pkg_name)
-                    for req in dist.requires():
-                        dependencies.add(req.project_name)
-                except:
+                    # Get metadata for the distribution using importlib.metadata
+                    dist = importlib.metadata.distribution(base_pkg_name)
+                    # Get the requirements (dependencies) from the distribution
+                    for req in dist.requires or []:
+                        # Parse the dependency name from the requirement string
+                        req_name = re.split(r'[<>=!~]', req.split(';')[0].strip())[0].strip()
+                        dependencies.add(req_name)
+                except importlib.metadata.PackageNotFoundError:
                     # Package isn't installed, can't analyze dependencies
                     pass
             except:

@@ -49,6 +49,23 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
+  
+  # New Langflow service
+  langflow:
+    image: langflowai/langflow:latest
+    container_name: langflow
+    network_mode: host
+    volumes:
+      - ./components:/home/user/app/src/components
+    environment:
+      - LANGFLOW_COMPONENTS_PATH=/home/user/app/src/components/custom/tools
+      - LANGFLOW_LOG_LEVEL=DEBUG
+      - LANGFLOW_AUTO_RELOAD=true
+      - DOCKER_HOST_IP=172.17.0.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: langflow run --host 0.0.0.0 --port 7860 --backend-only --dev
+    restart: unless-stopped
     
   # Memory stress container for testing alerts
   memory-stress:

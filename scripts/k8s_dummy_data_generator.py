@@ -199,6 +199,11 @@ class MetricsServer(BaseHTTPRequestHandler):
 
 def start_server(port, metrics_generator):
     """Start the HTTP server"""
+    # Note: Using 0.0.0.0 to make the service accessible from Docker containers
+    # For production environments with security concerns, consider:
+    # 1. Using Docker host networking mode to access localhost services
+    # 2. Setting up a reverse proxy with authentication
+    # 3. Using network isolation with Docker user-defined networks
     server = HTTPServer(('0.0.0.0', port), MetricsServer)
     server.metrics_generator = metrics_generator
     logger.info(f"Starting metrics server on port {port}")

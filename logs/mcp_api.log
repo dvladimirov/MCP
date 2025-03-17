@@ -1,0 +1,17 @@
+2025-03-18 00:17:21,442 - uvicorn.access - INFO - 127.0.0.1:60042 - "GET /v1/models HTTP/1.1" 200
+2025-03-18 00:22:19,470 - uvicorn.access - INFO - 127.0.0.1:43746 - "GET / HTTP/1.1" 404
+2025-03-18 00:22:19,478 - uvicorn.access - INFO - 127.0.0.1:43760 - "GET / HTTP/1.1" 404
+2025-03-18 00:22:19,486 - uvicorn.access - INFO - 127.0.0.1:43766 - "GET / HTTP/1.1" 404
+2025-03-18 00:22:19,494 - uvicorn.access - INFO - 127.0.0.1:43778 - "GET / HTTP/1.1" 404
+2025-03-18 00:29:02,750 - uvicorn.access - INFO - 127.0.0.1:52736 - "POST /v1/models/git-diff-analyzer/analyze HTTP/1.1" 200
+2025-03-18 00:29:53,299 - uvicorn.access - INFO - 127.0.0.1:54978 - "POST /v1/models/git-diff-analyzer/analyze HTTP/1.1" 200
+2025-03-18 00:32:00,582 - uvicorn.access - INFO - 127.0.0.1:60558 - "POST /v1/models/git-diff-analyzer/analyze HTTP/1.1" 200
+2025-03-18 00:35:43,336 - uvicorn.access - INFO - 127.0.0.1:60518 - "GET /v1/models HTTP/1.1" 200
+2025-03-18 00:35:43,402 - uvicorn.access - INFO - 127.0.0.1:60524 - "GET /v1/models HTTP/1.1" 200
+2025-03-18 00:36:39,728 - uvicorn.access - INFO - 127.0.0.1:49890 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
+2025-03-18 00:41:00,690 - uvicorn.access - INFO - 127.0.0.1:54336 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
+2025-03-18 00:41:02,756 - uvicorn.access - INFO - 127.0.0.1:55870 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
+2025-03-18 00:43:54,332 - uvicorn.access - INFO - 127.0.0.1:39316 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
+2025-03-18 00:43:56,395 - uvicorn.access - INFO - 127.0.0.1:39338 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
+2025-03-18 00:46:35,754 - uvicorn.access - INFO - 127.0.0.1:58698 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
+2025-03-18 00:48:05,431 - uvicorn.access - INFO - 127.0.0.1:59616 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
