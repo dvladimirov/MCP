@@ -1,0 +1,4 @@
+2025-03-18 20:23:51,464 - uvicorn.access - INFO - 127.0.0.1:40098 - "GET /v1/models HTTP/1.1" 200
+2025-03-18 20:23:57,701 - uvicorn.access - INFO - 127.0.0.1:36682 - "GET /v1/models HTTP/1.1" 200
+2025-03-18 20:23:57,765 - uvicorn.access - INFO - 127.0.0.1:36694 - "GET /v1/models HTTP/1.1" 200
+2025-03-18 20:24:04,600 - uvicorn.access - INFO - 127.0.0.1:36710 - "POST /v1/models/git-diff-analyzer/analyze-requirements HTTP/1.1" 200
