@@ -5,8 +5,9 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus/memory_alerts.yml:/etc/prometheus/memory_alerts.yml
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/memory_alerts.yml:/etc/prometheus/memory_alerts.yml:ro
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -16,6 +17,7 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
+    user: "nobody"
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -155,6 +157,7 @@ services:
 
 volumes:
   grafana-data: {}
+  prometheus_data: {}
 
 networks:
   monitoring:
