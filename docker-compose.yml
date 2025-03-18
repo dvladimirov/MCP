@@ -7,7 +7,6 @@ services:
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - ./prometheus/memory_alerts.yml:/etc/prometheus/memory_alerts.yml
-      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -156,7 +155,6 @@ services:
 
 volumes:
   grafana-data: {}
-  prometheus_data: {}
 
 networks:
   monitoring:
