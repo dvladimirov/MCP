@@ -1,0 +1,17 @@
+FROM prom/prometheus:latest
+
+# Copy configuration files
+COPY ./prometheus/prometheus.yml /etc/prometheus/prometheus.yml
+COPY ./prometheus/memory_alerts.yml /etc/prometheus/memory_alerts.yml
+
+# Set ownership and permissions on config files
+# Prometheus runs as nobody:nobody (65534:65534)
+USER root
+RUN chown -R nobody:nobody /etc/prometheus /prometheus && \
+    chmod -R 755 /etc/prometheus && \
+    chmod 644 /etc/prometheus/*.yml
+
+# Set user back to nobody (default for Prometheus)
+USER nobody
+
+# Command and port are inherited from the parent image 

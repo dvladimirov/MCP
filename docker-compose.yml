@@ -1,12 +1,13 @@
 services:
   prometheus:
-    image: prom/prometheus:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.prometheus
     container_name: prometheus
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./prometheus/memory_alerts.yml:/etc/prometheus/memory_alerts.yml
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -16,6 +17,7 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
+    # No user setting - let Dockerfile handle users and permissions
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -155,6 +157,7 @@ services:
 
 volumes:
   grafana-data: {}
+  prometheus_data: {}
 
 networks:
   monitoring:
