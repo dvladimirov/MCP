@@ -1,0 +1,12 @@
+FROM langflowai/langflow:latest
+
+# Copy components into the container
+COPY ./components /home/user/app/src/components
+
+# No need to change permissions - Docker will handle the ownership
+# when files are copied into the container
+
+# Ensure we are using the default user
+USER 1000:0
+
+# The command and other settings are inherited from the base image 

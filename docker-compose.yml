@@ -54,11 +54,11 @@ services:
   
   # New Langflow service
   langflow:
-    image: langflowai/langflow:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.langflow
     container_name: langflow
     network_mode: host
-    volumes:
-      - ./components:/home/user/app/src/components
     environment:
       - LANGFLOW_COMPONENTS_PATH=/home/user/app/src/components/custom/tools
       - LANGFLOW_LOG_LEVEL=DEBUG

@@ -192,6 +192,57 @@ Or use the container test script:
 ./scripts/container-memory-test.sh start
 ```
 
+### Docker Configuration and Reset Scripts
+
+This project includes multiple Docker configurations and reset scripts for reliable operation across different environments:
+
+#### Docker Configurations
+- **Standard Configuration** (`docker-compose.yml`): Uses custom Dockerfiles for Prometheus and Langflow to ensure consistent permissions across systems.
+- **Bridge Network Configuration** (`docker-compose.bridge.yml`): Alternative configuration that uses bridge networking for environments where host networking is problematic.
+
+#### Custom Dockerfiles for Solving Permission Issues
+The project uses custom Dockerfiles for both Prometheus and Langflow to solve common permission issues:
+
+- **Dockerfile.prometheus**: Sets up the Prometheus configuration with proper permissions for the `nobody` user.
+- **Dockerfile.langflow**: Copies the components directory into the container without changing file ownership, allowing Langflow to access the components without permission errors.
+
+This approach eliminates the need for volume mounts that can lead to permission conflicts across different machines and user configurations.
+
+#### Reset Scripts
+- **All Services Reset** (`reset-all.sh`): Reset all containers with a single command.
+  ```bash
+  # Basic reset (rebuilds containers with existing volumes)
+  ./reset-all.sh
+  
+  # Full reset (removes volumes and rebuilds containers)
+  ./reset-all.sh --clean
+  ```
+
+- **Individual Service Reset**:
+  ```bash
+  # Reset only Prometheus
+  ./reset-prometheus.sh
+  
+  # Reset only Langflow
+  ./reset-langflow.sh
+  ```
+
+These scripts ensure that the containers are properly configured with correct permissions and the latest code changes.
+
+#### Troubleshooting
+If you encounter permission issues:
+1. Use the reset scripts to rebuild the containers
+2. Check the logs with `docker compose logs <service_name>`
+3. Make sure any components added to Langflow are included in the Dockerfile.langflow
+
+#### Cross-Machine Deployment
+When deploying to a new machine:
+1. Clone the repository
+2. Make reset scripts executable: `chmod +x *.sh`
+3. Run the reset script: `./reset-all.sh`
+
+The custom Dockerfiles automatically handle all permission issues that might occur across different systems.
+
 ### Using Prometheus Client
 
 The `MCPAIComponent` class includes Prometheus capabilities:
