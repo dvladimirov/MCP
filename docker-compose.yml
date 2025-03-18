@@ -5,8 +5,8 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./prometheus/memory_alerts.yml:/etc/prometheus/memory_alerts.yml:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/memory_alerts.yml:/etc/prometheus/memory_alerts.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -17,7 +17,6 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
-    user: "nobody"
 
   node-exporter:
     image: prom/node-exporter:latest
