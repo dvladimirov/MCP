@@ -18,6 +18,8 @@ services:
     networks:
       - monitoring
     # No user setting - let Dockerfile handle users and permissions
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -153,6 +155,24 @@ services:
     restart: unless-stopped
     networks:
       - monitoring
+      
+  # Kubernetes Metrics Generator
+  k8s-metrics-generator:
+    image: python:3.9-slim
+    container_name: k8s-metrics-generator
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./scripts:/app/scripts
+    working_dir: /app
+    command: >
+      bash -c "pip install numpy && 
+              python scripts/k8s_dummy_data_generator.py --pods 35 --http-port 9093 --interval 2"
+    restart: unless-stopped
+    networks:
+      - monitoring
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   grafana-data: {}

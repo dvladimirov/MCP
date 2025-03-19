@@ -254,3 +254,15 @@
 2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod kafka-3930 on node master-1: 205771973.0941965 errors/s
 2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod kafka-7153 on node worker-2: 205771971.55135056 errors/s
 2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Detected 40 anomalies across all metrics
+2025-03-19 22:46:06,057 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:46:06,057 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:46:06,073 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:51:06,388 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:51:06,389 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:51:06,405 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:56:06,731 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:56:06,731 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:56:06,749 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:57:25,101 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:57:25,101 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:57:25,159 - kubernetes-anomaly-detector - INFO - No anomalies detected
