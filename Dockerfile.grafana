@@ -1,0 +1,16 @@
+FROM grafana/grafana:latest
+
+# Copy provisioning configuration
+COPY ./grafana/provisioning /etc/grafana/provisioning
+
+# Copy dashboards
+COPY ./grafana/dashboards /etc/grafana/dashboards
+
+# Set permissions
+USER root
+RUN chmod -R 755 /etc/grafana/provisioning /etc/grafana/dashboards
+
+# Switch back to default Grafana user
+USER 472
+
+# Other settings are inherited from the base image 

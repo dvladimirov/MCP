@@ -190,3 +190,67 @@
 2025-03-18 18:45:04,405 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
 2025-03-18 18:45:04,405 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
 2025-03-18 18:45:04,420 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-18 18:50:04,672 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-18 18:50:04,672 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-18 18:50:04,687 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-18 18:55:04,960 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-18 18:55:04,960 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-18 18:55:04,978 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:16:03,663 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:16:03,663 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:16:03,680 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:21:04,040 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:21:04,040 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:21:04,062 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:26:04,414 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:26:04,414 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:26:04,430 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:31:04,768 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:31:04,768 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:31:04,787 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:36:05,136 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:36:05,137 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:36:05,152 - kubernetes-anomaly-detector - INFO - No anomalies detected
+2025-03-19 22:41:05,480 - kubernetes-anomaly-detector - INFO - Initialized Kubernetes Anomaly Detector with Prometheus URL: http://prometheus:9090
+2025-03-19 22:41:05,481 - kubernetes-anomaly-detector - INFO - Alert threshold: 90.0%, Window: 30m, Z-score threshold: 3.0
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod prometheus-5074 on node master-1: 245598804.7621932 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod nginx-6059 on node worker-1: 225685387.8710446 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod kafka-6257 on node worker-1: 199134165.76856932 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod mongodb-3866 on node master-1: 199134165.5971544 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod redis-3954 on node worker-1: 199134165.08286905 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod mysql-8009 on node master-1: 199134164.48285902 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod rabbitmq-8978 on node worker-2: 198304440.32430166 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod prometheus-9122 on node worker-1: 192496360.8429491 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod mongodb-2647 on node worker-2: 192081496.0101059 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod postgres-7920 on node worker-1: 185858555.40305722 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod grafana-9574 on node worker-2: 185858553.51733452 errors/s
+2025-03-19 22:41:05,728 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod prometheus-2848 on node worker-1: 179220750.24886695 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod rabbitmq-2065 on node worker-1: 172582944.12324467 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod redis-1874 on node worker-1: 165945139.65476167 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod kafka-3930 on node master-1: 159307333.70058247 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod rabbitmq-4657 on node worker-2: 159307332.3291616 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod kafka-3855 on node worker-1: 152669526.6035312 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod kafka-1908 on node worker-2: 152669526.3749599 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod mongodb-5324 on node master-1: 146031719.79219335 errors/s
+2025-03-19 22:41:05,729 - kubernetes-anomaly-detector - WARNING - Network transmit errors detected for pod elasticsearch-1143 on node master-1: 142712817.6115313 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod rabbitmq-4657 on node worker-2: 391630525.0115152 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod prometheus-5074 on node master-1: 347655063.4185992 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod nginx-9861 on node worker-1: 331890277.76668596 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod mongodb-5324 on node master-1: 303679603.1399288 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod redis-3954 on node worker-1: 292063443.87011474 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod kafka-6257 on node worker-1: 292063442.8415242 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod grafana-9324 on node worker-1: 292063442.7843902 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod redis-1874 on node worker-1: 266756807.36976114 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod prometheus-2438 on node worker-1: 245598805.50504336 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod prometheus-6432 on node master-1: 238961000.40800422 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod prometheus-2848 on node worker-1: 238961000.3508603 errors/s
+2025-03-19 22:41:05,731 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod rabbitmq-9857 on node worker-2: 236471821.26090464 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod mysql-8009 on node master-1: 230248875.39312395 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod grafana-9574 on node worker-2: 225685388.15676248 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod elasticsearch-8081 on node worker-1: 225685387.9853455 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod elasticsearch-1143 on node master-1: 219047582.3168636 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod mysql-1552 on node worker-1: 212409781.27697566 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod rabbitmq-6848 on node worker-2: 212409775.56266963 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod kafka-3930 on node master-1: 205771973.0941965 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Network receive errors detected for pod kafka-7153 on node worker-2: 205771971.55135056 errors/s
+2025-03-19 22:41:05,732 - kubernetes-anomaly-detector - WARNING - Detected 40 anomalies across all metrics
