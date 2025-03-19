@@ -21,8 +21,38 @@ logger = logging.getLogger('mcp-grafana-bridge')
 GRAFANA_URL = os.environ.get('GRAFANA_URL', 'http://grafana:3000')
 PROMETHEUS_URL = os.environ.get('PROMETHEUS_URL', 'http://prometheus:9090')
 MCP_PORT = int(os.environ.get('MCP_PORT', 8085))
+# Use API key if provided, otherwise fall back to basic auth
+GRAFANA_API_KEY = os.environ.get('GRAFANA_API_KEY', '')
+GRAFANA_USERNAME = os.environ.get('GRAFANA_USERNAME', 'admin')
+GRAFANA_PASSWORD = os.environ.get('GRAFANA_PASSWORD', 'admin')
 
 app = Flask(__name__)
+
+def get_grafana_headers():
+    """
+    Returns the appropriate headers for Grafana API calls.
+    Uses API key if available, otherwise falls back to basic auth.
+    """
+    headers = {"Accept": "application/json"}
+    if GRAFANA_API_KEY:
+        headers["Authorization"] = f"Bearer {GRAFANA_API_KEY}"
+    return headers
+
+def make_grafana_request(method, endpoint, **kwargs):
+    """
+    Makes a request to the Grafana API with appropriate authentication.
+    """
+    url = f"{GRAFANA_URL}{endpoint}"
+    headers = get_grafana_headers()
+    if 'headers' in kwargs:
+        kwargs['headers'].update(headers)
+    else:
+        kwargs['headers'] = headers
+    
+    if not GRAFANA_API_KEY:
+        kwargs['auth'] = (GRAFANA_USERNAME, GRAFANA_PASSWORD)
+    
+    return requests.request(method, url, **kwargs)
 
 @app.route('/health', methods=['GET'])
 def health_check():
@@ -42,11 +72,7 @@ def version():
 def list_dashboards():
     """List all Grafana dashboards"""
     try:
-        response = requests.get(
-            f"{GRAFANA_URL}/api/search",
-            headers={"Accept": "application/json"},
-            auth=("admin", "admin")  # Default Grafana credentials
-        )
+        response = make_grafana_request('GET', '/api/search')
         response.raise_for_status()
         return jsonify(response.json())
     except Exception as e:
@@ -57,11 +83,7 @@ def list_dashboards():
 def get_dashboard(uid):
     """Get a specific Grafana dashboard by UID"""
     try:
-        response = requests.get(
-            f"{GRAFANA_URL}/api/dashboards/uid/{uid}",
-            headers={"Accept": "application/json"},
-            auth=("admin", "admin")
-        )
+        response = make_grafana_request('GET', f'/api/dashboards/uid/{uid}')
         response.raise_for_status()
         return jsonify(response.json())
     except Exception as e:
@@ -72,11 +94,7 @@ def get_dashboard(uid):
 def list_datasources():
     """List all Grafana datasources"""
     try:
-        response = requests.get(
-            f"{GRAFANA_URL}/api/datasources",
-            headers={"Accept": "application/json"},
-            auth=("admin", "admin")
-        )
+        response = make_grafana_request('GET', '/api/datasources')
         response.raise_for_status()
         return jsonify(response.json())
     except Exception as e:
@@ -146,14 +164,11 @@ def import_dashboard():
         if 'message' not in data:
             data['message'] = "Imported by MCP-Grafana Bridge"
             
-        response = requests.post(
-            f"{GRAFANA_URL}/api/dashboards/db",
-            headers={
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            },
-            auth=("admin", "admin"),
-            json=data
+        response = make_grafana_request(
+            'POST', 
+            '/api/dashboards/db',
+            json=data,
+            headers={"Content-Type": "application/json"}
         )
         response.raise_for_status()
         return jsonify(response.json())
@@ -162,7 +177,8 @@ def import_dashboard():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
+    auth_method = "API key" if GRAFANA_API_KEY else "basic auth"
     logger.info(f"Starting MCP-Grafana Bridge on port {MCP_PORT}")
-    logger.info(f"Connected to Grafana at {GRAFANA_URL}")
+    logger.info(f"Connected to Grafana at {GRAFANA_URL} using {auth_method}")
     logger.info(f"Connected to Prometheus at {PROMETHEUS_URL}")
     app.run(host='0.0.0.0', port=MCP_PORT) 

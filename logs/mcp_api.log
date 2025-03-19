@@ -1,8 +1,0 @@
-2025-03-20 00:40:00,762 - uvicorn.access - INFO - 127.0.0.1:49080 - "GET /v1/models HTTP/1.1" 200
-2025-03-20 00:40:04,434 - uvicorn.access - INFO - 127.0.0.1:49084 - "GET /v1/models HTTP/1.1" 200
-2025-03-20 00:40:04,502 - uvicorn.access - INFO - 127.0.0.1:49098 - "GET /v1/models HTTP/1.1" 200
-2025-03-20 00:40:14,662 - uvicorn.access - INFO - 127.0.0.1:47638 - "GET /v1/models HTTP/1.1" 200
-2025-03-20 00:40:14,689 - uvicorn.access - INFO - 127.0.0.1:47654 - "GET /v1/models HTTP/1.1" 200
-2025-03-20 00:40:40,152 - uvicorn.access - INFO - 127.0.0.1:47662 - "POST /v1/models/openai-gpt-chat/chat HTTP/1.1" 200
-2025-03-20 00:40:55,857 - uvicorn.access - INFO - 127.0.0.1:56246 - "GET /v1/models HTTP/1.1" 200
-2025-03-20 00:40:55,920 - uvicorn.access - INFO - 127.0.0.1:56248 - "GET /v1/models HTTP/1.1" 200

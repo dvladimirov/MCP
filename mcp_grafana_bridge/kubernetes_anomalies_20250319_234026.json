@@ -1,0 +1,531 @@
+{
+  "timestamp": "2025-03-19T23:40:26.169979",
+  "anomalies": {
+    "cpu": [],
+    "memory": [],
+    "disk_io": [],
+    "network": [
+      {
+        "pod": "grafana-9664",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 322699322.62094694,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 322699322.62094694,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "redis-8404",
+        "node": "worker-2",
+        "metric": "network_transmit_errors",
+        "current_value": 316245334.4517391,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 316245334.4517391,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "mysql-1844",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 303076771.0825189,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 303076771.0825189,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "redis-3375",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 297532681.8525096,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 297532681.8525096,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-5928",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 291460586.89970267,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 291460586.89970267,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "postgres-6727",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 279316398.24876755,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 279316398.24876755,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-2594",
+        "node": "worker-2",
+        "metric": "network_transmit_errors",
+        "current_value": 277521414.2704402,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 277521414.2704402,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "mysql-8454",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 272716293.8097288,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 272716293.8097288,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "redis-7516",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 271067431.2127522,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 271067431.2127522,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "rabbitmq-8878",
+        "node": "worker-2",
+        "metric": "network_transmit_errors",
+        "current_value": 271067430.21263826,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 271067430.21263826,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "redis-5540",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 251705475.48355058,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 251705475.48355058,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "rabbitmq-2167",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 251705470.81650102,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 251705470.81650102,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-9524",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 248691913.64532804,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 248691913.64532804,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "kafka-4274",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 248427909.86925423,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 248427909.86925423,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "mongodb-1042",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 245251485.48083988,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 245251485.48083988,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "elasticsearch-6498",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 245251483.86956722,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 245251483.86956722,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "elasticsearch-9961",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 232343511.30922836,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 232343511.30922836,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "elasticsearch-1550",
+        "node": "master-1",
+        "metric": "network_transmit_errors",
+        "current_value": 225889524.91792294,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 225889524.91792294,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "redis-1582",
+        "node": "worker-1",
+        "metric": "network_transmit_errors",
+        "current_value": 218067433.74644363,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 218067433.74644363,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-3708",
+        "node": "worker-2",
+        "metric": "network_transmit_errors",
+        "current_value": 212981551.07968837,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.457,
+            "value": 212981551.07968837,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "postgres-6727",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 477587182.2670166,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 477587182.2670166,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "elasticsearch-4091",
+        "node": "worker-2",
+        "metric": "network_receive_errors",
+        "current_value": 464679421.2433253,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 464679421.2433253,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "redis-1582",
+        "node": "worker-1",
+        "metric": "network_receive_errors",
+        "current_value": 437190883.9040809,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 437190883.9040809,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "rabbitmq-8878",
+        "node": "worker-2",
+        "metric": "network_receive_errors",
+        "current_value": 419502254.4935462,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 419502254.4935462,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "redis-5540",
+        "node": "worker-1",
+        "metric": "network_receive_errors",
+        "current_value": 419502250.104299,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 419502250.104299,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "mysql-1743",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 413048372.1482177,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 413048372.1482177,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "nginx-3263",
+        "node": "worker-1",
+        "metric": "network_receive_errors",
+        "current_value": 413048370.3148455,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 413048370.3148455,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "prometheus-9900",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 406594495.58111376,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 406594495.58111376,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-7007",
+        "node": "worker-2",
+        "metric": "network_receive_errors",
+        "current_value": 400140616.0138131,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 400140616.0138131,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "kafka-1369",
+        "node": "worker-2",
+        "metric": "network_receive_errors",
+        "current_value": 393686730.4460628,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 393686730.4460628,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-9524",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 393686727.8346647,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 393686727.8346647,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-2594",
+        "node": "worker-2",
+        "metric": "network_receive_errors",
+        "current_value": 387232852.26767904,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 387232852.26767904,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "rabbitmq-9559",
+        "node": "worker-1",
+        "metric": "network_receive_errors",
+        "current_value": 370397833.30797994,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 370397833.30797994,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "elasticsearch-6498",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 364061730.55413574,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 364061730.55413574,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "elasticsearch-1550",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 348509562.86280966,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 348509562.86280966,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "kafka-1193",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 339245344.55015886,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 339245344.55015886,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "grafana-3708",
+        "node": "worker-2",
+        "metric": "network_receive_errors",
+        "current_value": 335601803.45037186,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 335601803.45037186,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "mongodb-7178",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 329147924.4386265,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 329147924.4386265,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "mysql-8454",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 329147923.0496187,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 329147923.0496187,
+            "threshold": 0
+          }
+        ]
+      },
+      {
+        "pod": "mysql-1844",
+        "node": "master-1",
+        "metric": "network_receive_errors",
+        "current_value": 309786286.45887727,
+        "anomalies": [
+          {
+            "timestamp": 1742427626.46,
+            "value": 309786286.45887727,
+            "threshold": 0
+          }
+        ]
+      }
+    ]
+  },
+  "total_anomalies": 40
+}
