@@ -5,7 +5,7 @@
 # Install required packages
 echo "Installing required packages..."
 apt-get update
-apt-get install -y curl
+apt-get install -y curl jq
 pip install flask requests jinja2
 
 # MCP-Grafana Bridge startup script
@@ -71,9 +71,12 @@ if [ -z "$GRAFANA_API_KEY" ]; then
         
         # If we have a service account ID, create a token
         if [ ! -z "$SA_ID" ]; then
-            echo "Creating token for service account..."
+            # Generate a unique token name with timestamp
+            TOKEN_NAME="mcp-token-$(date +%s)"
+            
+            echo "Creating token with name $TOKEN_NAME for service account..."
             TOKEN_RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" \
-                -d '{"name":"mcp-token", "secondsToLive": 86400}' \
+                -d "{\"name\":\"$TOKEN_NAME\", \"secondsToLive\": 86400}" \
                 -u "$GRAFANA_USERNAME:$GRAFANA_PASSWORD" \
                 "$GRAFANA_URL/api/serviceaccounts/$SA_ID/tokens")
             
